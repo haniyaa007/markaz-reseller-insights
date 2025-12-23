@@ -1,12 +1,28 @@
-import { Bell, Search, Calendar, RefreshCw } from "lucide-react";
+import { Bell, Search, RefreshCw } from "lucide-react";
 import { AccountDropdown } from "./AccountDropdown";
+import { DateRangePicker } from "./DateRangePicker";
 
-export function Header() {
+interface HeaderProps {
+  dateRange: string;
+  onDateRangeChange: (range: string) => void;
+}
+
+export function Header({ dateRange, onDateRangeChange }: HeaderProps) {
   return (
     <header className="bg-card border-b border-border px-6 py-4 flex items-center justify-between sticky top-0 z-40">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Reseller Analytics</h1>
-        <p className="text-sm text-muted-foreground">Track your performance and grow your business</p>
+      <div className="flex items-center gap-4">
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-xl">M</span>
+          </div>
+          <span className="font-bold text-xl text-foreground hidden sm:block">Markaz</span>
+        </div>
+        <div className="h-6 w-px bg-border hidden sm:block" />
+        <div className="hidden sm:block">
+          <h1 className="text-lg font-bold text-foreground">Reseller Analytics</h1>
+          <p className="text-xs text-muted-foreground">Track your performance</p>
+        </div>
       </div>
       
       <div className="flex items-center gap-3">
@@ -25,11 +41,11 @@ export function Header() {
           <RefreshCw className="w-4 h-4 text-foreground" />
         </button>
 
-        {/* Date Range */}
-        <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-background text-sm font-medium text-foreground hover:bg-muted transition-colors">
-          <Calendar className="w-4 h-4" />
-          <span className="hidden sm:inline">Last 30 Days</span>
-        </button>
+        {/* Date Range Picker */}
+        <DateRangePicker 
+          selectedRange={dateRange}
+          onRangeChange={onDateRangeChange}
+        />
 
         {/* Account Dropdown */}
         <AccountDropdown />
