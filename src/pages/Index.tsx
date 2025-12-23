@@ -2,7 +2,7 @@ import { useState } from "react";
 import { 
   Wallet, TrendingUp, Clock, BadgePercent, ShoppingBag, Users,
   Download, ArrowUpRight, ArrowDownRight, Star, TrendingDown,
-  CheckCircle2, Truck, XCircle, Package, ChevronDown, Check, RefreshCw, ExternalLink
+  CheckCircle2, Truck, XCircle, Package, ChevronDown, Check, RefreshCw, ExternalLink, AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -20,7 +20,7 @@ const dateRanges = [
   { id: "lifetime", label: "All Time" },
 ];
 
-// Order Filters
+// Order Filters - ALL RESTORED
 const orderFilters = [
   { id: "all", label: "All", count: 1247 },
   { id: "in-progress", label: "In-progress", count: 186 },
@@ -30,7 +30,16 @@ const orderFilters = [
   { id: "cancelled", label: "Cancelled", count: 43 },
 ];
 
-// Sales Chart Data - Detailed
+// Product Sort Options
+const productSortOptions = [
+  { id: "profit", label: "Profit" },
+  { id: "revenue", label: "Revenue" },
+  { id: "sold", label: "Units Sold" },
+  { id: "rating", label: "Rating" },
+  { id: "trend", label: "Trend" },
+];
+
+// Sales Chart Data
 const salesData = [
   { name: "Jan", sales: 145000, orders: 89 },
   { name: "Feb", sales: 198000, orders: 124 },
@@ -67,30 +76,38 @@ const conversionData = [
 
 // Top Products with ALL metrics
 const topProducts = [
-  { rank: 1, name: "Summer Ultra-short Sunscreen Shirt", category: "Fashion", sold: 420, revenue: 611100, profit: 61110, trend: 12, rating: 4.8, reviews: 156 },
-  { rank: 2, name: "Pink Heart Titanium Steel Necklace", category: "Jewelry", sold: 385, revenue: 338800, profit: 33880, trend: 8, rating: 4.9, reviews: 203 },
-  { rank: 3, name: "Boys & Girls Quilted Cotton Jacket", category: "Kids", sold: 312, revenue: 1172496, profit: 117250, trend: 15, rating: 4.7, reviews: 89 },
-  { rank: 4, name: "Kulomi Pajamas Women's Coral Fleece", category: "Sleepwear", sold: 289, revenue: 621928, profit: 62193, trend: -3, rating: 4.6, reviews: 124 },
-  { rank: 5, name: "Double-headed Wax Carving Knife Set", category: "Tools", sold: 245, revenue: 227115, profit: 22712, trend: 5, rating: 4.5, reviews: 67 },
+  { id: 1, name: "Summer Ultra-short Sunscreen Shirt", category: "Fashion", sold: 420, revenue: 611100, profit: 61110, trend: 12, rating: 4.8, reviews: 156 },
+  { id: 2, name: "Pink Heart Titanium Steel Necklace", category: "Jewelry", sold: 385, revenue: 338800, profit: 33880, trend: 8, rating: 4.9, reviews: 203 },
+  { id: 3, name: "Boys & Girls Quilted Cotton Jacket", category: "Kids", sold: 312, revenue: 1172496, profit: 117250, trend: 15, rating: 4.7, reviews: 89 },
+  { id: 4, name: "Kulomi Pajamas Women's Coral Fleece", category: "Sleepwear", sold: 289, revenue: 621928, profit: 62193, trend: -3, rating: 4.6, reviews: 124 },
+  { id: 5, name: "Double-headed Wax Carving Knife Set", category: "Tools", sold: 245, revenue: 227115, profit: 22712, trend: 5, rating: 4.5, reviews: 67 },
+  { id: 6, name: "Premium Wireless Earbuds Pro", category: "Electronics", sold: 198, revenue: 495000, profit: 49500, trend: 22, rating: 4.4, reviews: 312 },
+  { id: 7, name: "Organic Face Serum Collection", category: "Beauty", sold: 456, revenue: 182400, profit: 54720, trend: 18, rating: 4.85, reviews: 278 },
 ];
 
-// Recent Orders
-const recentOrders = [
-  { id: "ORD-7829", customer: "Ahmed K.", amount: 880, profit: 88, status: "delivered" },
-  { id: "ORD-7828", customer: "Fatima A.", amount: 1455, profit: 145, status: "transit" },
-  { id: "ORD-7827", customer: "Usman S.", amount: 3758, profit: 376, status: "in-progress" },
-  { id: "ORD-7826", customer: "Zainab H.", amount: 2152, profit: 215, status: "delivered" },
-  { id: "ORD-7825", customer: "Bilal A.", amount: 927, profit: 93, status: "cancelled" },
+// Recent Orders - ALL STATUSES
+const allOrders = [
+  { id: "ORD-7829", customer: "Ahmed K.", amount: 880, profit: 88, status: "delivered", date: "Dec 20" },
+  { id: "ORD-7828", customer: "Fatima A.", amount: 1455, profit: 145, status: "in-progress", date: "Dec 19" },
+  { id: "ORD-7827", customer: "Usman S.", amount: 3758, profit: 376, status: "shippers-advice", date: "Dec 18" },
+  { id: "ORD-7826", customer: "Zainab H.", amount: 2152, profit: 215, status: "delivered", date: "Dec 17" },
+  { id: "ORD-7825", customer: "Bilal A.", amount: 927, profit: 93, status: "cancelled", date: "Dec 16" },
+  { id: "ORD-7824", customer: "Ayesha M.", amount: 1280, profit: 128, status: "returned", date: "Dec 15" },
+  { id: "ORD-7823", customer: "Hassan R.", amount: 650, profit: 65, status: "delivered", date: "Dec 14" },
+  { id: "ORD-7822", customer: "Sana T.", amount: 2890, profit: 289, status: "in-progress", date: "Dec 13" },
+  { id: "ORD-7821", customer: "Omar K.", amount: 1750, profit: 175, status: "shippers-advice", date: "Dec 12" },
+  { id: "ORD-7820", customer: "Nadia S.", amount: 3200, profit: 320, status: "delivered", date: "Dec 11" },
 ];
 
-const statusConfig: Record<string, { icon: any; color: string }> = {
-  delivered: { icon: CheckCircle2, color: "text-success" },
-  transit: { icon: Truck, color: "text-info" },
-  "in-progress": { icon: Clock, color: "text-warning" },
-  cancelled: { icon: XCircle, color: "text-destructive" },
+const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
+  delivered: { icon: CheckCircle2, color: "text-success", label: "Delivered" },
+  "in-progress": { icon: Clock, color: "text-warning", label: "In Progress" },
+  "shippers-advice": { icon: Package, color: "text-info", label: "Shipping" },
+  cancelled: { icon: XCircle, color: "text-destructive", label: "Cancelled" },
+  returned: { icon: AlertCircle, color: "text-muted-foreground", label: "Returned" },
 };
 
-// Custom Tooltip for Sales Chart
+// Custom Tooltips
 const SalesTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -114,7 +131,6 @@ const SalesTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-// Custom Tooltip for Conversion
 const ConversionTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
@@ -131,16 +147,34 @@ const ConversionTooltip = ({ active, payload, label }: any) => {
 const Index = () => {
   const [dateRange, setDateRange] = useState("30days");
   const [orderFilter, setOrderFilter] = useState("all");
+  const [productSort, setProductSort] = useState("profit");
   const [showDateDropdown, setShowDateDropdown] = useState(false);
 
   const selectedDateLabel = dateRanges.find(r => r.id === dateRange)?.label;
   const avgConversion = (conversionData.reduce((sum, d) => sum + d.value, 0) / conversionData.length).toFixed(1);
 
+  // Sort products based on selected option
+  const sortedProducts = [...topProducts].sort((a, b) => {
+    switch (productSort) {
+      case "profit": return b.profit - a.profit;
+      case "revenue": return b.revenue - a.revenue;
+      case "sold": return b.sold - a.sold;
+      case "rating": return b.rating - a.rating;
+      case "trend": return b.trend - a.trend;
+      default: return b.profit - a.profit;
+    }
+  }).slice(0, 5);
+
+  // Filter orders based on selected filter
+  const filteredOrders = orderFilter === "all" 
+    ? allOrders 
+    : allOrders.filter(order => order.status === orderFilter);
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-[1800px] mx-auto space-y-5">
         
-        {/* Header - Minimal */}
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">Analytics</h1>
@@ -153,9 +187,7 @@ const Index = () => {
                 onClick={() => setShowDateDropdown(!showDateDropdown)}
                 className={cn(
                   "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all",
-                  showDateDropdown 
-                    ? "bg-foreground text-background" 
-                    : "bg-card border border-border hover:border-primary/40"
+                  showDateDropdown ? "bg-foreground text-background" : "bg-card border border-border hover:border-primary/40"
                 )}
               >
                 {selectedDateLabel}
@@ -193,7 +225,6 @@ const Index = () => {
 
         {/* PRIMARY METRICS */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Revenue - Hero Card */}
           <div className="col-span-2 lg:col-span-1 gradient-hero rounded-2xl p-5 text-primary-foreground shadow-glow relative overflow-hidden">
             <div className="absolute inset-0 opacity-10">
               <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
@@ -211,7 +242,6 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Profit Earned */}
           <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-muted-foreground">Profit Earned</p>
@@ -224,7 +254,6 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Commission */}
           <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-muted-foreground">Commission</p>
@@ -237,7 +266,6 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Pending Orders */}
           <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all">
             <div className="flex items-center justify-between">
               <p className="text-sm font-medium text-muted-foreground">Pending Orders</p>
@@ -259,7 +287,7 @@ const Index = () => {
             
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              {/* Revenue Chart - RESTORED BETTER VERSION */}
+              {/* Revenue Chart */}
               <div className="lg:col-span-2 bg-card rounded-2xl p-5 border border-border shadow-card">
                 <div className="flex items-center justify-between mb-4">
                   <div>
@@ -295,7 +323,6 @@ const Index = () => {
 
               {/* Order Status + Conversion */}
               <div className="space-y-5">
-                {/* Order Status Donut */}
                 <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
                   <h3 className="font-bold text-foreground text-sm mb-2">Order Status</h3>
                   <div className="relative">
@@ -321,7 +348,6 @@ const Index = () => {
                   </div>
                 </div>
 
-                {/* Conversion - RESTORED BETTER VERSION */}
                 <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
                   <div className="flex items-center justify-between mb-2">
                     <h3 className="font-bold text-foreground text-sm">Conversion Rate</h3>
@@ -345,16 +371,32 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Top Products - FULL METRICS */}
+            {/* Top Products with SORT OPTIONS */}
             <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
-              <div className="p-4 border-b border-border flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-foreground">Top Selling Products</h3>
-                  <p className="text-xs text-muted-foreground">Your best performers this period</p>
+              <div className="p-4 border-b border-border">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="font-bold text-foreground">Top Selling Products</h3>
+                    <p className="text-xs text-muted-foreground">Sorted by {productSortOptions.find(o => o.id === productSort)?.label}</p>
+                  </div>
+                  {/* Sort Options */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {productSortOptions.map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => setProductSort(option.id)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                          productSort === option.id
+                            ? "bg-primary text-primary-foreground shadow-sm"
+                            : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        )}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary text-secondary-foreground text-xs font-semibold hover:bg-primary hover:text-primary-foreground transition-all">
-                  View All <ExternalLink className="w-3 h-3" />
-                </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -370,17 +412,17 @@ const Index = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
-                    {topProducts.map((product) => (
-                      <tr key={product.rank} className="hover:bg-muted/30 transition-colors">
+                    {sortedProducts.map((product, index) => (
+                      <tr key={product.id} className="hover:bg-muted/30 transition-colors">
                         <td className="py-3 px-4">
                           <div className={cn(
                             "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                            product.rank === 1 && "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white",
-                            product.rank === 2 && "bg-gradient-to-br from-gray-300 to-gray-400 text-white",
-                            product.rank === 3 && "bg-gradient-to-br from-amber-600 to-amber-700 text-white",
-                            product.rank > 3 && "bg-muted text-muted-foreground"
+                            index === 0 && "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white",
+                            index === 1 && "bg-gradient-to-br from-gray-300 to-gray-400 text-white",
+                            index === 2 && "bg-gradient-to-br from-amber-600 to-amber-700 text-white",
+                            index > 2 && "bg-muted text-muted-foreground"
                           )}>
-                            {product.rank}
+                            {index + 1}
                           </div>
                         </td>
                         <td className="py-3 px-4">
@@ -437,12 +479,16 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Orders Section with Filters */}
+            {/* Orders Section with ALL FILTERS */}
             <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
               <div className="p-4 border-b border-border">
-                <h3 className="font-bold text-foreground mb-3">Recent Orders</h3>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-foreground">Recent Orders</h3>
+                  <span className="text-xs text-muted-foreground">{filteredOrders.length} orders</span>
+                </div>
+                {/* ALL Order Filters */}
                 <div className="flex flex-wrap gap-1.5">
-                  {orderFilters.slice(0, 4).map((filter) => (
+                  {orderFilters.map((filter) => (
                     <button
                       key={filter.id}
                       onClick={() => setOrderFilter(filter.id)}
@@ -459,29 +505,40 @@ const Index = () => {
                 </div>
               </div>
               
-              <div className="divide-y divide-border/50 max-h-[300px] overflow-y-auto">
-                {recentOrders.map((order) => {
-                  const status = statusConfig[order.status] || statusConfig.delivered;
-                  const StatusIcon = status.icon;
-                  return (
-                    <div key={order.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                        <span className="text-xs font-bold text-primary">{order.customer[0]}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm text-foreground">{order.customer}</p>
-                        <p className="text-xs text-muted-foreground">{order.id}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-sm">Rs {order.amount}</p>
-                        <div className="flex items-center justify-end gap-1">
-                          <StatusIcon className={cn("w-3 h-3", status.color)} />
-                          <span className="text-xs font-medium text-primary">+{order.profit}</span>
+              {/* Filtered Orders List */}
+              <div className="divide-y divide-border/50 max-h-[320px] overflow-y-auto">
+                {filteredOrders.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <Package className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No orders found</p>
+                  </div>
+                ) : (
+                  filteredOrders.map((order) => {
+                    const status = statusConfig[order.status];
+                    const StatusIcon = status?.icon || CheckCircle2;
+                    return (
+                      <div key={order.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                          <span className="text-xs font-bold text-primary">{order.customer[0]}</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-sm text-foreground">{order.customer}</p>
+                            <span className={cn("flex items-center gap-0.5 text-[10px] font-medium", status?.color)}>
+                              <StatusIcon className="w-3 h-3" />
+                              {status?.label}
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{order.id} · {order.date}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-sm">Rs {order.amount.toLocaleString()}</p>
+                          <span className="text-xs font-semibold text-primary">+Rs {order.profit}</span>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
               
               <div className="p-3 border-t border-border bg-muted/30">
