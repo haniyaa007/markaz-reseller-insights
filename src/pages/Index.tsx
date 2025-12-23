@@ -2,13 +2,50 @@ import { useState } from "react";
 import { 
   Wallet, TrendingUp, Clock, BadgePercent, ShoppingBag, Users,
   Download, ArrowUpRight, ArrowDownRight, Star, TrendingDown,
-  CheckCircle2, Truck, XCircle, Package, ChevronDown, Check, RefreshCw, ExternalLink, AlertCircle
+  CheckCircle2, Truck, XCircle, Package, ChevronDown, Check, RefreshCw, ExternalLink, AlertCircle, Info, Eye
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, BarChart, Bar, CartesianGrid
 } from "recharts";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+// Metric Definitions
+const metricDefinitions: Record<string, { title: string; description: string }> = {
+  revenue: {
+    title: "Total Revenue",
+    description: "The total amount of money generated from all sales before any deductions like costs, commissions, or returns."
+  },
+  profit: {
+    title: "Profit Earned",
+    description: "Your net earnings after deducting product costs and platform fees from total revenue."
+  },
+  commission: {
+    title: "Commission",
+    description: "The fee earned by the platform from your sales. This is typically a percentage of each transaction."
+  },
+  pending: {
+    title: "Pending Orders",
+    description: "Orders that have been placed but not yet shipped or processed. Lower numbers indicate efficient order fulfillment."
+  },
+  orders: {
+    title: "Total Orders",
+    description: "The complete count of all orders placed within the selected time period, regardless of status."
+  },
+  customers: {
+    title: "Customers",
+    description: "Unique buyers who have made at least one purchase. Higher numbers indicate growing market reach."
+  },
+  conversion: {
+    title: "Conversion Rate",
+    description: "Percentage of impressions (product views) that resulted in actual purchases. Calculated as (Orders ÷ Impressions) × 100."
+  }
+};
 
 // Date Range Data
 const dateRanges = [
@@ -57,21 +94,21 @@ const salesData = [
 
 // Order Status Data
 const orderStatusData = [
-  { name: "Delivered", value: 892, color: "hsl(152, 69%, 45%)" },
-  { name: "In Transit", value: 186, color: "hsl(210, 90%, 55%)" },
-  { name: "Pending", value: 74, color: "hsl(38, 92%, 50%)" },
-  { name: "Cancelled", value: 43, color: "hsl(0, 72%, 51%)" },
+  { name: "Delivered", value: 892, color: "hsl(152, 69%, 45%)", description: "Successfully completed orders" },
+  { name: "In Transit", value: 186, color: "hsl(210, 90%, 55%)", description: "Orders currently being shipped" },
+  { name: "Pending", value: 74, color: "hsl(38, 92%, 50%)", description: "Orders awaiting processing" },
+  { name: "Cancelled", value: 43, color: "hsl(0, 72%, 51%)", description: "Orders that were cancelled" },
 ];
 
 // Conversion Data
 const conversionData = [
-  { name: "Mon", value: 42, orders: 15 },
-  { name: "Tue", value: 35, orders: 12 },
-  { name: "Wed", value: 58, orders: 21 },
-  { name: "Thu", value: 45, orders: 16 },
-  { name: "Fri", value: 62, orders: 23 },
-  { name: "Sat", value: 78, orders: 28 },
-  { name: "Sun", value: 55, orders: 20 },
+  { name: "Mon", value: 42, orders: 15, impressions: 357 },
+  { name: "Tue", value: 35, orders: 12, impressions: 343 },
+  { name: "Wed", value: 58, orders: 21, impressions: 362 },
+  { name: "Thu", value: 45, orders: 16, impressions: 356 },
+  { name: "Fri", value: 62, orders: 23, impressions: 371 },
+  { name: "Sat", value: 78, orders: 28, impressions: 359 },
+  { name: "Sun", value: 55, orders: 20, impressions: 364 },
 ];
 
 // Top Products with ALL metrics
@@ -107,6 +144,31 @@ const statusConfig: Record<string, { icon: any; color: string; label: string }> 
   returned: { icon: AlertCircle, color: "text-muted-foreground", label: "Returned" },
 };
 
+// Metric Info Popover Component
+const MetricInfoPopover = ({ metricKey, children }: { metricKey: string; children: React.ReactNode }) => {
+  const metric = metricDefinitions[metricKey];
+  if (!metric) return <>{children}</>;
+  
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="cursor-pointer hover:opacity-80 transition-opacity w-full text-left">
+          {children}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-4" side="bottom" align="start">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <Info className="w-4 h-4 text-primary" />
+            <h4 className="font-bold text-foreground">{metric.title}</h4>
+          </div>
+          <p className="text-sm text-muted-foreground leading-relaxed">{metric.description}</p>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 // Custom Tooltips
 const SalesTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -137,7 +199,13 @@ const ConversionTooltip = ({ active, payload, label }: any) => {
       <div className="bg-card border border-border rounded-xl p-3 shadow-xl">
         <p className="text-sm font-bold text-foreground">{label}</p>
         <p className="text-lg font-bold text-primary">{payload[0].value}%</p>
-        <p className="text-xs text-muted-foreground">{payload[0].payload.orders} conversions</p>
+        <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
+          <p>{payload[0].payload.orders} orders</p>
+          <p className="flex items-center gap-1">
+            <Eye className="w-3 h-3" />
+            {payload[0].payload.impressions} impressions
+          </p>
+        </div>
       </div>
     );
   }
@@ -225,58 +293,78 @@ const Index = () => {
 
         {/* PRIMARY METRICS */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="col-span-2 lg:col-span-1 gradient-hero rounded-2xl p-5 text-primary-foreground shadow-glow relative overflow-hidden">
-            <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+          <MetricInfoPopover metricKey="revenue">
+            <div className="col-span-2 lg:col-span-1 gradient-hero rounded-2xl p-5 text-primary-foreground shadow-glow relative overflow-hidden group">
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+              </div>
+              <div className="relative">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium opacity-80 flex items-center gap-1.5">
+                    Total Revenue
+                    <Info className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+                  </p>
+                  <Wallet className="w-5 h-5 opacity-80" />
+                </div>
+                <p className="text-3xl font-extrabold mt-2">Rs 2,847,560</p>
+                <div className="flex items-center gap-1 mt-2">
+                  <ArrowUpRight className="w-4 h-4" />
+                  <span className="text-sm font-semibold">+18.2% vs last period</span>
+                </div>
+              </div>
             </div>
-            <div className="relative">
+          </MetricInfoPopover>
+
+          <MetricInfoPopover metricKey="profit">
+            <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium opacity-80">Total Revenue</p>
-                <Wallet className="w-5 h-5 opacity-80" />
+                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                  Profit Earned
+                  <Info className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 transition-opacity" />
+                </p>
+                <div className="p-2 rounded-xl bg-success/10"><TrendingUp className="w-4 h-4 text-success" /></div>
               </div>
-              <p className="text-3xl font-extrabold mt-2">Rs 2,847,560</p>
+              <p className="text-2xl font-bold text-foreground mt-2">Rs 456,780</p>
               <div className="flex items-center gap-1 mt-2">
-                <ArrowUpRight className="w-4 h-4" />
-                <span className="text-sm font-semibold">+18.2% vs last period</span>
+                <ArrowUpRight className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs font-semibold text-success">+15.3%</span>
               </div>
             </div>
-          </div>
+          </MetricInfoPopover>
 
-          <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-muted-foreground">Profit Earned</p>
-              <div className="p-2 rounded-xl bg-success/10"><TrendingUp className="w-4 h-4 text-success" /></div>
+          <MetricInfoPopover metricKey="commission">
+            <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                  Commission
+                  <Info className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 transition-opacity" />
+                </p>
+                <div className="p-2 rounded-xl bg-primary/10"><BadgePercent className="w-4 h-4 text-primary" /></div>
+              </div>
+              <p className="text-2xl font-bold text-foreground mt-2">Rs 142,378</p>
+              <div className="flex items-center gap-1 mt-2">
+                <ArrowUpRight className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs font-semibold text-success">+12.8%</span>
+              </div>
             </div>
-            <p className="text-2xl font-bold text-foreground mt-2">Rs 456,780</p>
-            <div className="flex items-center gap-1 mt-2">
-              <ArrowUpRight className="w-3.5 h-3.5 text-success" />
-              <span className="text-xs font-semibold text-success">+15.3%</span>
-            </div>
-          </div>
+          </MetricInfoPopover>
 
-          <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-muted-foreground">Commission</p>
-              <div className="p-2 rounded-xl bg-primary/10"><BadgePercent className="w-4 h-4 text-primary" /></div>
+          <MetricInfoPopover metricKey="pending">
+            <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                  Pending Orders
+                  <Info className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 transition-opacity" />
+                </p>
+                <div className="p-2 rounded-xl bg-warning/10"><Clock className="w-4 h-4 text-warning" /></div>
+              </div>
+              <p className="text-2xl font-bold text-foreground mt-2">74</p>
+              <div className="flex items-center gap-1 mt-2">
+                <ArrowDownRight className="w-3.5 h-3.5 text-success" />
+                <span className="text-xs font-semibold text-success">-8.5% (good)</span>
+              </div>
             </div>
-            <p className="text-2xl font-bold text-foreground mt-2">Rs 142,378</p>
-            <div className="flex items-center gap-1 mt-2">
-              <ArrowUpRight className="w-3.5 h-3.5 text-success" />
-              <span className="text-xs font-semibold text-success">+12.8%</span>
-            </div>
-          </div>
-
-          <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all">
-            <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-muted-foreground">Pending Orders</p>
-              <div className="p-2 rounded-xl bg-warning/10"><Clock className="w-4 h-4 text-warning" /></div>
-            </div>
-            <p className="text-2xl font-bold text-foreground mt-2">74</p>
-            <div className="flex items-center gap-1 mt-2">
-              <ArrowDownRight className="w-3.5 h-3.5 text-success" />
-              <span className="text-xs font-semibold text-success">-8.5% (good)</span>
-            </div>
-          </div>
+          </MetricInfoPopover>
         </div>
 
         {/* MAIN GRID */}
@@ -329,45 +417,85 @@ const Index = () => {
                     <ResponsiveContainer width="100%" height={100}>
                       <PieChart>
                         <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={30} outerRadius={45} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                          {orderStatusData.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                          {orderStatusData.map((entry, i) => (
+                            <Cell key={i} fill={entry.color} className="cursor-pointer hover:opacity-80 transition-opacity" />
+                          ))}
                         </Pie>
+                        <Tooltip 
+                          content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                              const data = payload[0].payload;
+                              return (
+                                <div className="bg-card border border-border rounded-xl p-3 shadow-xl">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="w-3 h-3 rounded-full" style={{ background: data.color }} />
+                                    <span className="font-bold text-foreground">{data.name}</span>
+                                  </div>
+                                  <p className="text-2xl font-extrabold" style={{ color: data.color }}>{data.value}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">{data.description}</p>
+                                </div>
+                              );
+                            }
+                            return null;
+                          }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
                       <p className="text-lg font-bold">1,195</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-1 mt-1">
+                  <div className="grid grid-cols-4 gap-1 mt-1">
                     {orderStatusData.map((item) => (
-                      <div key={item.name} className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full" style={{ background: item.color }} />
-                        <span className="text-[10px] text-muted-foreground">{item.name}</span>
-                        <span className="text-[10px] font-bold ml-auto">{item.value}</span>
-                      </div>
+                      <Popover key={item.name}>
+                        <PopoverTrigger asChild>
+                          <button className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
+                            <span className="w-3 h-3 rounded-full" style={{ background: item.color }} />
+                            <span className="text-[9px] text-muted-foreground">{item.name}</span>
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-48 p-3" side="bottom">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="w-3 h-3 rounded-full" style={{ background: item.color }} />
+                            <span className="font-bold text-foreground">{item.name}</span>
+                          </div>
+                          <p className="text-2xl font-extrabold" style={{ color: item.color }}>{item.value}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
+                        </PopoverContent>
+                      </Popover>
                     ))}
                   </div>
                 </div>
 
-                <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-bold text-foreground text-sm">Conversion Rate</h3>
-                    <div className="text-right">
-                      <p className="text-xl font-bold text-primary">{avgConversion}%</p>
-                      <p className="text-[10px] text-success font-semibold">+0.6% this week</p>
+                <MetricInfoPopover metricKey="conversion">
+                  <div className="bg-card rounded-2xl p-4 border border-border shadow-card group">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                        Conversion Rate
+                        <Info className="w-3.5 h-3.5 text-muted-foreground opacity-40 group-hover:opacity-100 transition-opacity" />
+                      </h3>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-primary">{avgConversion}%</p>
+                        <p className="text-[10px] text-success font-semibold">+0.6% this week</p>
+                      </div>
                     </div>
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-2">
+                      <Eye className="w-3 h-3" />
+                      <span>Based on 2,512 impressions</span>
+                    </div>
+                    <ResponsiveContainer width="100%" height={70}>
+                      <BarChart data={conversionData} barCategoryGap="20%">
+                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} dy={5} />
+                        <Tooltip content={<ConversionTooltip />} cursor={false} />
+                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                          {conversionData.map((_, i) => (
+                            <Cell key={i} fill={i === 5 ? "hsl(152, 69%, 45%)" : "hsl(152, 40%, 85%)"} />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
                   </div>
-                  <ResponsiveContainer width="100%" height={70}>
-                    <BarChart data={conversionData} barCategoryGap="20%">
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} dy={5} />
-                      <Tooltip content={<ConversionTooltip />} cursor={false} />
-                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                        {conversionData.map((_, i) => (
-                          <Cell key={i} fill={i === 5 ? "hsl(152, 69%, 45%)" : "hsl(152, 40%, 85%)"} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                </MetricInfoPopover>
               </div>
             </div>
 
@@ -461,22 +589,32 @@ const Index = () => {
             
             {/* Secondary Metrics */}
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-card rounded-xl p-4 border border-border">
-                <div className="flex items-center gap-2">
-                  <ShoppingBag className="w-4 h-4 text-info" />
-                  <span className="text-xs text-muted-foreground">Total Orders</span>
+              <MetricInfoPopover metricKey="orders">
+                <div className="bg-card rounded-xl p-4 border border-border group">
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4 text-info" />
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      Total Orders
+                      <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
+                    </span>
+                  </div>
+                  <p className="text-xl font-bold mt-1">1,247</p>
+                  <span className="text-[10px] text-success font-medium">+8.2%</span>
                 </div>
-                <p className="text-xl font-bold mt-1">1,247</p>
-                <span className="text-[10px] text-success font-medium">+8.2%</span>
-              </div>
-              <div className="bg-card rounded-xl p-4 border border-border">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4 text-primary" />
-                  <span className="text-xs text-muted-foreground">Customers</span>
+              </MetricInfoPopover>
+              <MetricInfoPopover metricKey="customers">
+                <div className="bg-card rounded-xl p-4 border border-border group">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                      Customers
+                      <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
+                    </span>
+                  </div>
+                  <p className="text-xl font-bold mt-1">486</p>
+                  <span className="text-[10px] text-success font-medium">+22.4%</span>
                 </div>
-                <p className="text-xl font-bold mt-1">486</p>
-                <span className="text-[10px] text-success font-medium">+22.4%</span>
-              </div>
+              </MetricInfoPopover>
             </div>
 
             {/* Orders Section with ALL FILTERS */}
