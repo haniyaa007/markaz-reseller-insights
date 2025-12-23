@@ -388,7 +388,7 @@ const Index = () => {
                   </div>
                 </div>
                 <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={salesData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                  <AreaChart data={salesData} margin={{ top: 5, right: 50, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.25} />
@@ -401,10 +401,11 @@ const Index = () => {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 90%)" vertical={false} />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} dy={8} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v/1000}k`} />
+                    <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v/1000}k`} />
+                    <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(210, 90%, 55%)" }} />
                     <Tooltip content={<SalesTooltip />} />
-                    <Area type="monotone" dataKey="sales" stroke="hsl(152, 69%, 45%)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
-                    <Area type="monotone" dataKey="orders" stroke="hsl(210, 90%, 55%)" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
+                    <Area yAxisId="left" type="monotone" dataKey="sales" stroke="hsl(152, 69%, 45%)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
+                    <Area yAxisId="right" type="monotone" dataKey="orders" stroke="hsl(210, 90%, 55%)" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -445,22 +446,26 @@ const Index = () => {
                       <p className="text-lg font-bold">1,195</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-4 gap-1 mt-1">
+                  <div className="flex items-center justify-center gap-2 mt-2">
                     {orderStatusData.map((item) => (
                       <Popover key={item.name}>
                         <PopoverTrigger asChild>
-                          <button className="flex flex-col items-center gap-0.5 p-1.5 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                            <span className="w-3 h-3 rounded-full" style={{ background: item.color }} />
-                            <span className="text-[9px] text-muted-foreground">{item.name}</span>
-                          </button>
+                          <button 
+                            className="w-4 h-4 rounded-full cursor-pointer hover:scale-125 transition-transform ring-2 ring-transparent hover:ring-offset-2 hover:ring-offset-card"
+                            style={{ background: item.color }}
+                            title={item.name}
+                          />
                         </PopoverTrigger>
-                        <PopoverContent className="w-48 p-3" side="bottom">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="w-3 h-3 rounded-full" style={{ background: item.color }} />
-                            <span className="font-bold text-foreground">{item.name}</span>
+                        <PopoverContent 
+                          className="w-auto p-2.5 bg-card/90 backdrop-blur-md border border-border/50 shadow-lg" 
+                          side="top" 
+                          sideOffset={8}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
+                            <span className="text-xs font-semibold text-foreground">{item.name}</span>
+                            <span className="text-sm font-bold" style={{ color: item.color }}>{item.value}</span>
                           </div>
-                          <p className="text-2xl font-extrabold" style={{ color: item.color }}>{item.value}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{item.description}</p>
                         </PopoverContent>
                       </Popover>
                     ))}
