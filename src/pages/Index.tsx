@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { 
-  Wallet, TrendingUp, Clock, BadgePercent, ShoppingBag, Users,
-  Download, ArrowUpRight, ArrowDownRight, Star, TrendingDown,
-  CheckCircle2, Truck, XCircle, Package, ChevronDown, Check, RefreshCw, ExternalLink, AlertCircle, Info, Eye
+  Wallet, TrendingUp, Clock, ShoppingBag, Users,
+  Download, ArrowUpRight, ArrowDownRight, Star,
+  CheckCircle2, Truck, XCircle, Package, ChevronDown, Check, RefreshCw, AlertCircle, Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { 
@@ -69,11 +69,11 @@ const orderFilters = [
 
 // Product Sort Options
 const productSortOptions = [
+  { id: "delivery", label: "Delivery %" },
   { id: "profit", label: "Profit" },
   { id: "revenue", label: "Revenue" },
   { id: "sold", label: "Units Sold" },
   { id: "rating", label: "Rating" },
-  { id: "trend", label: "Trend" },
 ];
 
 // Sales Chart Data
@@ -100,26 +100,31 @@ const orderStatusData = [
   { name: "Cancelled", value: 43, color: "hsl(0, 72%, 51%)", description: "Orders that were cancelled" },
 ];
 
-// Conversion Data
-const conversionData = [
-  { name: "Mon", value: 42, orders: 15, impressions: 357 },
-  { name: "Tue", value: 35, orders: 12, impressions: 343 },
-  { name: "Wed", value: 58, orders: 21, impressions: 362 },
-  { name: "Thu", value: 45, orders: 16, impressions: 356 },
-  { name: "Fri", value: 62, orders: 23, impressions: 371 },
-  { name: "Sat", value: 78, orders: 28, impressions: 359 },
-  { name: "Sun", value: 55, orders: 20, impressions: 364 },
+// Delivery Performance Data - By Partners
+const deliveryByPartner = [
+  { name: "TCS", delivered: 412, total: 445, percentage: 92.6, color: "hsl(152, 69%, 45%)" },
+  { name: "PostEx", delivered: 287, total: 325, percentage: 88.3, color: "hsl(210, 90%, 55%)" },
+  { name: "Leopards", delivered: 198, total: 230, percentage: 86.1, color: "hsl(38, 92%, 50%)" },
+  { name: "M&P", delivered: 156, total: 195, percentage: 80.0, color: "hsl(280, 65%, 55%)" },
 ];
 
-// Top Products with ALL metrics
+// Delivery Performance Data - By Cities
+const deliveryByCities = [
+  { name: "Karachi", delivered: 389, total: 420, percentage: 92.6, color: "hsl(152, 69%, 45%)" },
+  { name: "Lahore", delivered: 312, total: 350, percentage: 89.1, color: "hsl(210, 90%, 55%)" },
+  { name: "Islamabad", delivered: 198, total: 225, percentage: 88.0, color: "hsl(38, 92%, 50%)" },
+  { name: "Faisalabad", delivered: 154, total: 200, percentage: 77.0, color: "hsl(280, 65%, 55%)" },
+];
+
+// Top Products with Delivery %
 const topProducts = [
-  { id: 1, name: "Summer Ultra-short Sunscreen Shirt", category: "Fashion", sold: 420, revenue: 611100, profit: 61110, trend: 12, rating: 4.8, reviews: 156 },
-  { id: 2, name: "Pink Heart Titanium Steel Necklace", category: "Jewelry", sold: 385, revenue: 338800, profit: 33880, trend: 8, rating: 4.9, reviews: 203 },
-  { id: 3, name: "Boys & Girls Quilted Cotton Jacket", category: "Kids", sold: 312, revenue: 1172496, profit: 117250, trend: 15, rating: 4.7, reviews: 89 },
-  { id: 4, name: "Kulomi Pajamas Women's Coral Fleece", category: "Sleepwear", sold: 289, revenue: 621928, profit: 62193, trend: -3, rating: 4.6, reviews: 124 },
-  { id: 5, name: "Double-headed Wax Carving Knife Set", category: "Tools", sold: 245, revenue: 227115, profit: 22712, trend: 5, rating: 4.5, reviews: 67 },
-  { id: 6, name: "Premium Wireless Earbuds Pro", category: "Electronics", sold: 198, revenue: 495000, profit: 49500, trend: 22, rating: 4.4, reviews: 312 },
-  { id: 7, name: "Organic Face Serum Collection", category: "Beauty", sold: 456, revenue: 182400, profit: 54720, trend: 18, rating: 4.85, reviews: 278 },
+  { id: 1, name: "Summer Ultra-short Sunscreen Shirt", category: "Fashion", sold: 420, revenue: 611100, profit: 61110, rating: 4.8, reviews: 156, deliveryRate: 94.5 },
+  { id: 2, name: "Pink Heart Titanium Steel Necklace", category: "Jewelry", sold: 385, revenue: 338800, profit: 33880, rating: 4.9, reviews: 203, deliveryRate: 91.2 },
+  { id: 3, name: "Boys & Girls Quilted Cotton Jacket", category: "Kids", sold: 312, revenue: 1172496, profit: 117250, rating: 4.7, reviews: 89, deliveryRate: 88.7 },
+  { id: 4, name: "Kulomi Pajamas Women's Coral Fleece", category: "Sleepwear", sold: 289, revenue: 621928, profit: 62193, rating: 4.6, reviews: 124, deliveryRate: 86.3 },
+  { id: 5, name: "Double-headed Wax Carving Knife Set", category: "Tools", sold: 245, revenue: 227115, profit: 22712, rating: 4.5, reviews: 67, deliveryRate: 82.1 },
+  { id: 6, name: "Premium Wireless Earbuds Pro", category: "Electronics", sold: 198, revenue: 495000, profit: 49500, rating: 4.4, reviews: 312, deliveryRate: 79.5 },
+  { id: 7, name: "Organic Face Serum Collection", category: "Beauty", sold: 456, revenue: 182400, profit: 54720, rating: 4.85, reviews: 278, deliveryRate: 96.2 },
 ];
 
 // Recent Orders - ALL STATUSES
@@ -193,18 +198,15 @@ const SalesTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const ConversionTooltip = ({ active, payload, label }: any) => {
+const DeliveryTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
+    const data = payload[0].payload;
     return (
       <div className="bg-card border border-border rounded-xl p-3 shadow-xl">
-        <p className="text-sm font-bold text-foreground">{label}</p>
-        <p className="text-lg font-bold text-primary">{payload[0].value}%</p>
-        <div className="text-xs text-muted-foreground space-y-0.5 mt-1">
-          <p>{payload[0].payload.orders} orders</p>
-          <p className="flex items-center gap-1">
-            <Eye className="w-3 h-3" />
-            {payload[0].payload.impressions} impressions
-          </p>
+        <p className="text-sm font-bold text-foreground">{data.name}</p>
+        <p className="text-lg font-bold" style={{ color: data.color }}>{data.percentage}%</p>
+        <div className="text-xs text-muted-foreground mt-1">
+          <p>{data.delivered} of {data.total} delivered</p>
         </div>
       </div>
     );
@@ -215,21 +217,23 @@ const ConversionTooltip = ({ active, payload, label }: any) => {
 const Index = () => {
   const [dateRange, setDateRange] = useState("30days");
   const [orderFilter, setOrderFilter] = useState("all");
-  const [productSort, setProductSort] = useState("profit");
+  const [productSort, setProductSort] = useState("delivery");
   const [showDateDropdown, setShowDateDropdown] = useState(false);
+  const [deliveryView, setDeliveryView] = useState<"partners" | "cities">("partners");
 
   const selectedDateLabel = dateRanges.find(r => r.id === dateRange)?.label;
-  const avgConversion = (conversionData.reduce((sum, d) => sum + d.value, 0) / conversionData.length).toFixed(1);
+  const deliveryData = deliveryView === "partners" ? deliveryByPartner : deliveryByCities;
+  const avgDelivery = (deliveryData.reduce((sum, d) => sum + d.percentage, 0) / deliveryData.length).toFixed(1);
 
   // Sort products based on selected option
   const sortedProducts = [...topProducts].sort((a, b) => {
     switch (productSort) {
+      case "delivery": return b.deliveryRate - a.deliveryRate;
       case "profit": return b.profit - a.profit;
       case "revenue": return b.revenue - a.revenue;
       case "sold": return b.sold - a.sold;
       case "rating": return b.rating - a.rating;
-      case "trend": return b.trend - a.trend;
-      default: return b.profit - a.profit;
+      default: return b.deliveryRate - a.deliveryRate;
     }
   }).slice(0, 5);
 
@@ -243,147 +247,147 @@ const Index = () => {
       <div className="max-w-[1800px] mx-auto space-y-5">
         
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">Analytics</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">Real-time business insights</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">Analytics</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Real-time business insights</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Date Range */}
             <div className="relative">
               <button
                 onClick={() => setShowDateDropdown(!showDateDropdown)}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all",
+                  "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all",
                   showDateDropdown ? "bg-foreground text-background" : "bg-card border border-border hover:border-primary/40"
                 )}
               >
                 {selectedDateLabel}
-                <ChevronDown className={cn("w-4 h-4 transition-transform", showDateDropdown && "rotate-180")} />
+                <ChevronDown className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform", showDateDropdown && "rotate-180")} />
               </button>
               {showDateDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-40 bg-card border border-border rounded-xl shadow-xl z-50 py-1 animate-fade-in">
+                <div className="absolute right-0 top-full mt-2 w-36 sm:w-40 bg-card border border-border rounded-xl shadow-xl z-50 py-1 animate-fade-in">
                   {dateRanges.map((range) => (
                     <button
                       key={range.id}
                       className={cn(
-                        "w-full flex items-center justify-between px-4 py-2.5 text-sm transition-colors",
+                        "w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm transition-colors",
                         dateRange === range.id ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted"
                       )}
                       onClick={() => { setDateRange(range.id); setShowDateDropdown(false); }}
                     >
                       {range.label}
-                      {dateRange === range.id && <Check className="w-4 h-4" />}
+                      {dateRange === range.id && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                     </button>
                   ))}
                 </div>
               )}
             </div>
             
-            <button className="p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-all">
-              <RefreshCw className="w-4 h-4 text-muted-foreground" />
+            <button className="p-2 sm:p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-all">
+              <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             </button>
             
-            <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl gradient-hero text-primary-foreground text-sm font-semibold shadow-glow hover:opacity-90 transition-all">
-              <Download className="w-4 h-4" />
-              <span className="hidden sm:inline">Export Report</span>
+            <button className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl gradient-hero text-primary-foreground text-xs sm:text-sm font-semibold shadow-glow hover:opacity-90 transition-all">
+              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Export</span>
             </button>
           </div>
         </div>
 
         {/* PRIMARY METRICS */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <MetricInfoPopover metricKey="revenue">
-            <div className="col-span-2 lg:col-span-1 gradient-hero rounded-2xl p-5 text-primary-foreground shadow-glow relative overflow-hidden group">
+            <div className="col-span-2 lg:col-span-1 gradient-hero rounded-xl sm:rounded-2xl p-4 sm:p-5 text-primary-foreground shadow-glow relative overflow-hidden group">
               <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+                <div className="absolute top-0 right-0 w-24 sm:w-32 h-24 sm:h-32 bg-white rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
               </div>
               <div className="relative">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium opacity-80 flex items-center gap-1.5">
+                  <p className="text-xs sm:text-sm font-medium opacity-80 flex items-center gap-1.5">
                     Total Revenue
-                    <Info className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+                    <Info className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
                   </p>
-                  <Wallet className="w-5 h-5 opacity-80" />
+                  <Wallet className="w-4 h-4 sm:w-5 sm:h-5 opacity-80" />
                 </div>
-                <p className="text-3xl font-extrabold mt-2">Rs 2,847,560</p>
-                <div className="flex items-center gap-1 mt-2">
-                  <ArrowUpRight className="w-4 h-4" />
-                  <span className="text-sm font-semibold">+18.2% vs last period</span>
+                <p className="text-xl sm:text-2xl md:text-3xl font-extrabold mt-1.5 sm:mt-2">Rs 2,847,560</p>
+                <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
+                  <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="text-xs sm:text-sm font-semibold">+18.2%</span>
                 </div>
               </div>
             </div>
           </MetricInfoPopover>
 
           <MetricInfoPopover metricKey="profit">
-            <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
+            <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                  Profit Earned
-                  <Info className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 transition-opacity" />
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  Profit
+                  <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity hidden sm:block" />
                 </p>
-                <div className="p-2 rounded-xl bg-success/10"><TrendingUp className="w-4 h-4 text-success" /></div>
+                <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-success/10"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-success" /></div>
               </div>
-              <p className="text-2xl font-bold text-foreground mt-2">Rs 456,780</p>
-              <div className="flex items-center gap-1 mt-2">
-                <ArrowUpRight className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs font-semibold text-success">+15.3%</span>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">Rs 456,780</p>
+              <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
+                <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
+                <span className="text-[10px] sm:text-xs font-semibold text-success">+15.3%</span>
               </div>
             </div>
           </MetricInfoPopover>
 
           <MetricInfoPopover metricKey="orders">
-            <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
+            <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                  Total Orders
-                  <Info className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 transition-opacity" />
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  Orders
+                  <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity hidden sm:block" />
                 </p>
-                <div className="p-2 rounded-xl bg-info/10"><ShoppingBag className="w-4 h-4 text-info" /></div>
+                <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-info/10"><ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-info" /></div>
               </div>
-              <p className="text-2xl font-bold text-foreground mt-2">1,247</p>
-              <div className="flex items-center gap-1 mt-2">
-                <ArrowUpRight className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs font-semibold text-success">+8.2%</span>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">1,247</p>
+              <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
+                <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
+                <span className="text-[10px] sm:text-xs font-semibold text-success">+8.2%</span>
               </div>
             </div>
           </MetricInfoPopover>
 
           <MetricInfoPopover metricKey="pending">
-            <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
+            <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                  Pending Orders
-                  <Info className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 transition-opacity" />
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  Pending
+                  <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity hidden sm:block" />
                 </p>
-                <div className="p-2 rounded-xl bg-warning/10"><Clock className="w-4 h-4 text-warning" /></div>
+                <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
               </div>
-              <p className="text-2xl font-bold text-foreground mt-2">74</p>
-              <div className="flex items-center gap-1 mt-2">
-                <ArrowDownRight className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs font-semibold text-success">-8.5% (good)</span>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">74</p>
+              <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
+                <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
+                <span className="text-[10px] sm:text-xs font-semibold text-success">-8.5%</span>
               </div>
             </div>
           </MetricInfoPopover>
         </div>
 
-        {/* ROW 2-4: Revenue Overview (left) + Customers/Order Status/Conversion (right) */}
-        <div className="grid grid-cols-12 gap-4">
-          {/* LEFT - Revenue Overview (spans rows 2-4) */}
-          <div className="col-span-12 lg:col-span-7">
-            <div className="bg-card rounded-2xl p-5 border border-border shadow-card h-full">
-              <div className="flex items-center justify-between mb-4">
+        {/* ROW 2-4: Revenue Overview (left) + Customers/Order Status/Delivery (right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 sm:gap-4">
+          {/* LEFT - Revenue Overview */}
+          <div className="lg:col-span-7">
+            <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card h-full">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                 <div>
-                  <h3 className="text-lg font-bold text-foreground">Revenue Overview</h3>
-                  <p className="text-xs text-muted-foreground">Monthly revenue and orders trend</p>
+                  <h3 className="text-base sm:text-lg font-bold text-foreground">Revenue Overview</h3>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">Monthly revenue and orders</p>
                 </div>
-                <div className="flex items-center gap-4 text-xs">
-                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-primary" /> Revenue</span>
-                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-info" /> Orders</span>
+                <div className="flex items-center gap-3 sm:gap-4 text-[10px] sm:text-xs">
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-primary" /> Revenue</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-info" /> Orders</span>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={380}>
-                <AreaChart data={salesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={salesData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.25} />
@@ -395,9 +399,9 @@ const Index = () => {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 90%)" vertical={false} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} dy={8} />
-                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v/1000}k`} />
-                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(210, 90%, 55%)" }} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} dy={8} />
+                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v/1000}k`} width={35} />
+                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(210, 90%, 55%)" }} width={30} />
                   <Tooltip content={<SalesTooltip />} />
                   <Area yAxisId="left" type="monotone" dataKey="sales" stroke="hsl(152, 69%, 45%)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
                   <Area yAxisId="right" type="monotone" dataKey="orders" stroke="hsl(210, 90%, 55%)" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
@@ -406,8 +410,8 @@ const Index = () => {
             </div>
           </div>
 
-          {/* RIGHT - Customers → Order Status → Conversion Rate (stacked) */}
-          <div className="col-span-12 lg:col-span-5 space-y-4">
+          {/* RIGHT - Customers → Order Status → Delivery Performance (stacked) */}
+          <div className="lg:col-span-5 space-y-3 sm:space-y-4">
             {/* Customers Card */}
             <MetricInfoPopover metricKey="customers">
               <div className="bg-card rounded-xl p-4 border border-border group">
@@ -475,38 +479,54 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Conversion Rate */}
-            <MetricInfoPopover metricKey="conversion">
-              <div className="bg-card rounded-2xl p-4 border border-border shadow-card group">
-                <div className="flex items-center justify-between mb-2">
-                  <div>
-                    <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
-                      Conversion Rate
-                      <Info className="w-3.5 h-3.5 text-muted-foreground opacity-40 group-hover:opacity-100 transition-opacity" />
-                    </h3>
-                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1">
-                      <Eye className="w-3 h-3" />
-                      <span>Based on 2,512 impressions</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-primary">{avgConversion}%</p>
-                    <p className="text-[10px] text-success font-semibold">+0.6% this week</p>
-                  </div>
+            {/* Delivery Performance */}
+            <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                    <Truck className="w-4 h-4 text-primary" />
+                    Delivery Performance
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Success rate by {deliveryView}</p>
                 </div>
-                <ResponsiveContainer width="100%" height={80}>
-                  <BarChart data={conversionData} barCategoryGap="15%">
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} dy={5} />
-                    <Tooltip content={<ConversionTooltip />} cursor={false} />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                      {conversionData.map((_, i) => (
-                        <Cell key={i} fill={i === 5 ? "hsl(152, 69%, 45%)" : "hsl(152, 40%, 85%)"} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
+                  <button
+                    onClick={() => setDeliveryView("partners")}
+                    className={cn(
+                      "px-2 py-1 rounded-md text-[10px] font-semibold transition-all",
+                      deliveryView === "partners" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    Partners
+                  </button>
+                  <button
+                    onClick={() => setDeliveryView("cities")}
+                    className={cn(
+                      "px-2 py-1 rounded-md text-[10px] font-semibold transition-all",
+                      deliveryView === "cities" ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    Cities
+                  </button>
+                </div>
               </div>
-            </MetricInfoPopover>
+              <div className="flex items-center gap-2 mb-3">
+                <p className="text-2xl font-bold text-primary">{avgDelivery}%</p>
+                <span className="text-xs text-success font-semibold">Avg. Success</span>
+              </div>
+              <ResponsiveContainer width="100%" height={100}>
+                <BarChart data={deliveryData} layout="vertical" barCategoryGap="20%">
+                  <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v}%`} />
+                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} width={70} />
+                  <Tooltip content={<DeliveryTooltip />} cursor={false} />
+                  <Bar dataKey="percentage" radius={[0, 6, 6, 0]}>
+                    {deliveryData.map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
@@ -536,7 +556,46 @@ const Index = () => {
               </div>
             </div>
           </div>
-          <div className="overflow-x-auto">
+          {/* Mobile Card View */}
+          <div className="block md:hidden space-y-3 p-4">
+            {sortedProducts.map((product, index) => (
+              <div key={product.id} className="bg-muted/30 rounded-xl p-4 border border-border/50">
+                <div className="flex items-start gap-3">
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0",
+                    index === 0 && "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white",
+                    index === 1 && "bg-gradient-to-br from-gray-300 to-gray-400 text-white",
+                    index === 2 && "bg-gradient-to-br from-amber-600 to-amber-700 text-white",
+                    index > 2 && "bg-muted text-muted-foreground"
+                  )}>
+                    {index + 1}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-foreground line-clamp-1">{product.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{product.category}</p>
+                    <div className="flex items-center gap-3 mt-2 flex-wrap">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                        <span className="text-xs font-medium">{product.rating}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">{product.sold} sold</span>
+                      <span className="text-xs font-bold text-primary">Rs {product.profit.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className={cn(
+                    "px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1",
+                    product.deliveryRate >= 90 ? "bg-success/10 text-success" : product.deliveryRate >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                  )}>
+                    <Truck className="w-3 h-3" />
+                    {product.deliveryRate}%
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
@@ -546,7 +605,7 @@ const Index = () => {
                   <th className="text-right py-3 px-4">Sold</th>
                   <th className="text-right py-3 px-4">Revenue</th>
                   <th className="text-right py-3 px-4">Profit</th>
-                  <th className="text-right py-3 px-4">Trend</th>
+                  <th className="text-right py-3 px-4">Delivery %</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/50">
@@ -580,10 +639,10 @@ const Index = () => {
                     <td className="py-3 px-4 text-right">
                       <div className={cn(
                         "inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-semibold",
-                        product.trend > 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                        product.deliveryRate >= 90 ? "bg-success/10 text-success" : product.deliveryRate >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                       )}>
-                        {product.trend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                        {product.trend > 0 ? "+" : ""}{product.trend}%
+                        <Truck className="w-3 h-3" />
+                        {product.deliveryRate}%
                       </div>
                     </td>
                   </tr>
