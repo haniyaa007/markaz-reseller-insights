@@ -6,15 +6,14 @@ import { TopProductsTable } from "@/components/dashboard/TopProductsTable";
 import { OrderStatusChart } from "@/components/dashboard/OrderStatusChart";
 import { ConversionCard } from "@/components/dashboard/ConversionCard";
 import { OrderFilters } from "@/components/dashboard/OrderFilters";
-import { FavoriteProductsBar } from "@/components/dashboard/FavoriteProductsBar";
 import { OrdersTable } from "@/components/dashboard/OrdersTable";
-import { DollarSign, ShoppingBag, TrendingUp, Clock, Wallet, Users } from "lucide-react";
+import { Wallet, ShoppingBag, TrendingUp, Clock, BadgePercent, Users } from "lucide-react";
 
 const Index = () => {
   const [dateRange, setDateRange] = useState("30days");
   const [orderFilter, setOrderFilter] = useState("all");
 
-  // Data changes based on date range (simulated)
+  // Dynamic data based on date range
   const getDataForRange = (range: string) => {
     const multipliers: Record<string, number> = {
       "7days": 0.25,
@@ -38,29 +37,38 @@ const Index = () => {
 
   const data = getDataForRange(dateRange);
 
+  const orderCounts = {
+    all: 370,
+    "in-progress": 68,
+    "shippers-advice": 25,
+    delivered: 245,
+    returned: 17,
+    cancelled: 15,
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with Logo */}
       <Header 
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
       />
 
-      <main className="p-4 md:p-6 space-y-6 max-w-[1600px] mx-auto">
-        {/* Order Filters at Top */}
+      <main className="px-4 md:px-8 py-6 space-y-8 max-w-[1600px] mx-auto">
+        {/* Order Filters */}
         <OrderFilters 
           activeFilter={orderFilter}
           onFilterChange={setOrderFilter}
+          counts={orderCounts}
         />
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* KPI Cards - Primary card highlighted */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <KPICard
             title="Total Revenue"
             value={`Rs ${data.revenue.toLocaleString()}`}
             change={{ value: "+12.5%", type: "positive" }}
-            icon={DollarSign}
-            iconColor="text-primary"
+            icon={Wallet}
+            variant="primary"
             delay={0}
           />
           <KPICard
@@ -68,7 +76,6 @@ const Index = () => {
             value={data.orders.toLocaleString()}
             change={{ value: "+8.2%", type: "positive" }}
             icon={ShoppingBag}
-            iconColor="text-info"
             delay={50}
           />
           <KPICard
@@ -76,7 +83,6 @@ const Index = () => {
             value={`Rs ${data.profit.toLocaleString()}`}
             change={{ value: "+15.3%", type: "positive" }}
             icon={TrendingUp}
-            iconColor="text-success"
             delay={100}
           />
           <KPICard
@@ -84,15 +90,13 @@ const Index = () => {
             value={data.pending.toString()}
             change={{ value: "-5.1%", type: "positive" }}
             icon={Clock}
-            iconColor="text-warning"
             delay={150}
           />
           <KPICard
             title="Commission"
             value={`Rs ${data.commission.toLocaleString()}`}
             change={{ value: "+9.8%", type: "positive" }}
-            icon={Wallet}
-            iconColor="text-primary"
+            icon={BadgePercent}
             delay={200}
           />
           <KPICard
@@ -100,30 +104,26 @@ const Index = () => {
             value={data.customers.toLocaleString()}
             change={{ value: "+22.4%", type: "positive" }}
             icon={Users}
-            iconColor="text-info"
             delay={250}
           />
         </div>
 
-        {/* Favorites Bar - Horizontal Scroll */}
-        <FavoriteProductsBar />
+        {/* Top Products - Moved Higher */}
+        <TopProductsTable />
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <div className="xl:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
             <SalesChart />
           </div>
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
             <OrderStatusChart />
             <ConversionCard />
           </div>
         </div>
 
         {/* Orders Table */}
-        <OrdersTable />
-
-        {/* Top Products */}
-        <TopProductsTable />
+        <OrdersTable filter={orderFilter} />
       </main>
     </div>
   );
