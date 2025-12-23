@@ -576,6 +576,26 @@ const Index = () => {
 
           {/* RIGHT COLUMN */}
           <div className="col-span-12 xl:col-span-4 space-y-4">
+            {/* Customers Card */}
+            <MetricInfoPopover metricKey="customers">
+              <div className="bg-card rounded-xl p-4 border border-border group">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      Customers
+                      <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ArrowUpRight className="w-3.5 h-3.5 text-success" />
+                    <span className="text-xs font-semibold text-success">+22.4%</span>
+                  </div>
+                </div>
+                <p className="text-2xl font-bold mt-2">486</p>
+              </div>
+            </MetricInfoPopover>
+
             {/* Orders Section with ALL FILTERS */}
             <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
               <div className="p-4 border-b border-border">
