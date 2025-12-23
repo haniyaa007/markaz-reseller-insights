@@ -367,11 +367,10 @@ const Index = () => {
           </MetricInfoPopover>
         </div>
 
-        {/* MAIN GRID - 3 COLUMNS */}
+        {/* ROW 2-4: Revenue Overview (left) + Customers/Order Status/Conversion (right) */}
         <div className="grid grid-cols-12 gap-4">
-          
-          {/* LEFT - Revenue Overview */}
-          <div className="col-span-12 lg:col-span-5 xl:col-span-5">
+          {/* LEFT - Revenue Overview (spans rows 2-4) */}
+          <div className="col-span-12 lg:col-span-7">
             <div className="bg-card rounded-2xl p-5 border border-border shadow-card h-full">
               <div className="flex items-center justify-between mb-4">
                 <div>
@@ -383,7 +382,7 @@ const Index = () => {
                   <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-info" /> Orders</span>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={320}>
+              <ResponsiveContainer width="100%" height={380}>
                 <AreaChart data={salesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
@@ -407,8 +406,29 @@ const Index = () => {
             </div>
           </div>
 
-          {/* MIDDLE - Order Status + Conversion */}
-          <div className="col-span-12 lg:col-span-4 xl:col-span-4 space-y-4">
+          {/* RIGHT - Customers → Order Status → Conversion Rate (stacked) */}
+          <div className="col-span-12 lg:col-span-5 space-y-4">
+            {/* Customers Card */}
+            <MetricInfoPopover metricKey="customers">
+              <div className="bg-card rounded-xl p-4 border border-border group">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      Customers
+                      <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <ArrowUpRight className="w-3.5 h-3.5 text-success" />
+                    <span className="text-xs font-semibold text-success">+22.4%</span>
+                  </div>
+                </div>
+                <p className="text-2xl font-bold mt-2">486</p>
+              </div>
+            </MetricInfoPopover>
+
+            {/* Order Status */}
             <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
               <h3 className="font-bold text-foreground text-sm mb-3">Order Status</h3>
               <div className="flex items-center gap-4">
@@ -443,7 +463,6 @@ const Index = () => {
                     <p className="text-xl font-bold">1,195</p>
                   </div>
                 </div>
-                {/* Legend */}
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
                   {orderStatusData.map((item) => (
                     <div key={item.name} className="flex items-center gap-2">
@@ -456,6 +475,7 @@ const Index = () => {
               </div>
             </div>
 
+            {/* Conversion Rate */}
             <MetricInfoPopover metricKey="conversion">
               <div className="bg-card rounded-2xl p-4 border border-border shadow-card group">
                 <div className="flex items-center justify-between mb-2">
@@ -488,99 +508,9 @@ const Index = () => {
               </div>
             </MetricInfoPopover>
           </div>
-
-          {/* RIGHT - Customers + Recent Orders */}
-          <div className="col-span-12 lg:col-span-3 xl:col-span-3 space-y-4">
-            {/* Customers Card */}
-            <MetricInfoPopover metricKey="customers">
-              <div className="bg-card rounded-xl p-4 border border-border group">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-primary" />
-                    <span className="text-sm text-muted-foreground flex items-center gap-1">
-                      Customers
-                      <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <ArrowUpRight className="w-3.5 h-3.5 text-success" />
-                    <span className="text-xs font-semibold text-success">+22.4%</span>
-                  </div>
-                </div>
-                <p className="text-2xl font-bold mt-2">486</p>
-              </div>
-            </MetricInfoPopover>
-
-            {/* Recent Orders */}
-            <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
-              <div className="p-3 border-b border-border">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-foreground text-sm">Recent Orders</h3>
-                  <span className="text-[10px] text-muted-foreground">{filteredOrders.length} orders</span>
-                </div>
-                <div className="flex flex-wrap gap-1">
-                  {orderFilters.map((filter) => (
-                    <button
-                      key={filter.id}
-                      onClick={() => setOrderFilter(filter.id)}
-                      className={cn(
-                        "px-2 py-1 rounded-full text-[9px] font-semibold transition-all",
-                        orderFilter === filter.id
-                          ? "bg-foreground text-background"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      )}
-                    >
-                      {filter.label} <span className="opacity-70">{filter.count}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              
-              <div className="divide-y divide-border/50 max-h-[260px] overflow-y-auto">
-                {filteredOrders.length === 0 ? (
-                  <div className="p-6 text-center">
-                    <Package className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
-                    <p className="text-xs text-muted-foreground">No orders found</p>
-                  </div>
-                ) : (
-                  filteredOrders.map((order) => {
-                    const status = statusConfig[order.status];
-                    const StatusIcon = status?.icon || CheckCircle2;
-                    return (
-                      <div key={order.id} className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer">
-                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-bold text-primary">{order.customer[0]}</span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <p className="font-medium text-xs text-foreground truncate">{order.customer}</p>
-                            <span className={cn("flex items-center gap-0.5 text-[9px] font-medium", status?.color)}>
-                              <StatusIcon className="w-2.5 h-2.5" />
-                              {status?.label}
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-muted-foreground">{order.id} · {order.date}</p>
-                        </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className="font-semibold text-xs">Rs {order.amount.toLocaleString()}</p>
-                          <span className="text-[10px] font-semibold text-primary">+Rs {order.profit}</span>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              
-              <div className="p-2 border-t border-border bg-muted/30">
-                <button className="w-full py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                  View All Orders →
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* TOP SELLING PRODUCTS - Full Width */}
+        {/* ROW 5: TOP SELLING PRODUCTS */}
         <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
           <div className="p-4 border-b border-border">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -660,6 +590,73 @@ const Index = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        {/* ROW 6: RECENT ORDERS - Full Width at Bottom */}
+        <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-bold text-foreground">Recent Orders</h3>
+              <span className="text-xs text-muted-foreground">{filteredOrders.length} orders</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {orderFilters.map((filter) => (
+                <button
+                  key={filter.id}
+                  onClick={() => setOrderFilter(filter.id)}
+                  className={cn(
+                    "px-2.5 py-1.5 rounded-full text-[10px] font-semibold transition-all",
+                    orderFilter === filter.id
+                      ? "bg-foreground text-background"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                >
+                  {filter.label} <span className="opacity-70">{filter.count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+          
+          <div className="divide-y divide-border/50 max-h-[300px] overflow-y-auto">
+            {filteredOrders.length === 0 ? (
+              <div className="p-8 text-center">
+                <Package className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">No orders found</p>
+              </div>
+            ) : (
+              filteredOrders.map((order) => {
+                const status = statusConfig[order.status];
+                const StatusIcon = status?.icon || CheckCircle2;
+                return (
+                  <div key={order.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                      <span className="text-xs font-bold text-primary">{order.customer[0]}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm text-foreground">{order.customer}</p>
+                        <span className={cn("flex items-center gap-0.5 text-[10px] font-medium", status?.color)}>
+                          <StatusIcon className="w-3 h-3" />
+                          {status?.label}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{order.id} · {order.date}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-sm">Rs {order.amount.toLocaleString()}</p>
+                      <span className="text-xs font-semibold text-primary">+Rs {order.profit}</span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+          
+          <div className="p-3 border-t border-border bg-muted/30">
+            <button className="w-full py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors">
+              View All Orders →
+            </button>
           </div>
         </div>
       </div>
