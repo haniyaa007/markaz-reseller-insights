@@ -576,37 +576,6 @@ const Index = () => {
 
           {/* RIGHT COLUMN */}
           <div className="col-span-12 xl:col-span-4 space-y-4">
-            
-            {/* Secondary Metrics */}
-            <div className="grid grid-cols-2 gap-3">
-              <MetricInfoPopover metricKey="orders">
-                <div className="bg-card rounded-xl p-4 border border-border group">
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-info" />
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      Total Orders
-                      <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
-                    </span>
-                  </div>
-                  <p className="text-xl font-bold mt-1">1,247</p>
-                  <span className="text-[10px] text-success font-medium">+8.2%</span>
-                </div>
-              </MetricInfoPopover>
-              <MetricInfoPopover metricKey="customers">
-                <div className="bg-card rounded-xl p-4 border border-border group">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-4 h-4 text-primary" />
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      Customers
-                      <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
-                    </span>
-                  </div>
-                  <p className="text-xl font-bold mt-1">486</p>
-                  <span className="text-[10px] text-success font-medium">+22.4%</span>
-                </div>
-              </MetricInfoPopover>
-            </div>
-
             {/* Orders Section with ALL FILTERS */}
             <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
               <div className="p-4 border-b border-border">
