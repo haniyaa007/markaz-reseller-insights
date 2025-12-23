@@ -6,6 +6,10 @@ import { TopProductsTable } from "@/components/dashboard/TopProductsTable";
 import { OrderStatusChart } from "@/components/dashboard/OrderStatusChart";
 import { RecentOrders } from "@/components/dashboard/RecentOrders";
 import { ConversionCard } from "@/components/dashboard/ConversionCard";
+import { OrderFilters } from "@/components/dashboard/OrderFilters";
+import { CategoryTabs } from "@/components/dashboard/CategoryTabs";
+import { FavoriteProducts } from "@/components/dashboard/FavoriteProducts";
+import { OrdersTable } from "@/components/dashboard/OrdersTable";
 import { DollarSign, ShoppingBag, TrendingUp, Clock, Wallet, Users } from "lucide-react";
 
 const Index = () => {
@@ -17,6 +21,9 @@ const Index = () => {
       {/* Main Content */}
       <div className="ml-64 transition-all duration-300">
         <Header />
+        
+        {/* Category Tabs - Markaz Style */}
+        <CategoryTabs />
 
         <main className="p-6 space-y-6">
           {/* KPI Cards */}
@@ -82,10 +89,18 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Tables Row */}
+          {/* Order Filters - Markaz Pill Style */}
+          <div className="bg-card rounded-lg p-4 shadow-card border border-border/50">
+            <OrderFilters />
+          </div>
+
+          {/* Orders Table */}
+          <OrdersTable />
+
+          {/* Bottom Row */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <TopProductsTable />
-            <RecentOrders />
+            <FavoriteProducts />
           </div>
         </main>
       </div>
