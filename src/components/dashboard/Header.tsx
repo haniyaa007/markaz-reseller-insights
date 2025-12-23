@@ -1,4 +1,5 @@
-import { Bell, Search, Calendar } from "lucide-react";
+import { Bell, Search, Calendar, RefreshCw } from "lucide-react";
+import { AccountDropdown } from "./AccountDropdown";
 
 export function Header() {
   return (
@@ -8,22 +9,30 @@ export function Header() {
         <p className="text-sm text-muted-foreground">Track your performance and grow your business</p>
       </div>
       
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {/* Search */}
-        <div className="relative hidden md:block">
+        <div className="relative hidden lg:block">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input 
             type="text"
             placeholder="Search products, orders..."
-            className="pl-10 pr-4 py-2 w-64 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+            className="pl-10 pr-4 py-2 w-64 rounded-full border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
           />
         </div>
 
+        {/* Refresh */}
+        <button className="p-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors hidden sm:flex">
+          <RefreshCw className="w-4 h-4 text-foreground" />
+        </button>
+
         {/* Date Range */}
-        <button className="flex items-center gap-2 px-4 py-2 rounded-lg border border-border bg-background text-sm font-medium text-foreground hover:bg-muted transition-colors">
+        <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-background text-sm font-medium text-foreground hover:bg-muted transition-colors">
           <Calendar className="w-4 h-4" />
           <span className="hidden sm:inline">Last 30 Days</span>
         </button>
+
+        {/* Account Dropdown */}
+        <AccountDropdown />
 
         {/* Notifications */}
         <button className="relative p-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors">
