@@ -332,19 +332,19 @@ const Index = () => {
             </div>
           </MetricInfoPopover>
 
-          <MetricInfoPopover metricKey="commission">
+          <MetricInfoPopover metricKey="orders">
             <div className="bg-card rounded-2xl p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
               <div className="flex items-center justify-between">
                 <p className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
-                  Commission
+                  Total Orders
                   <Info className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100 transition-opacity" />
                 </p>
-                <div className="p-2 rounded-xl bg-primary/10"><BadgePercent className="w-4 h-4 text-primary" /></div>
+                <div className="p-2 rounded-xl bg-info/10"><ShoppingBag className="w-4 h-4 text-info" /></div>
               </div>
-              <p className="text-2xl font-bold text-foreground mt-2">Rs 142,378</p>
+              <p className="text-2xl font-bold text-foreground mt-2">1,247</p>
               <div className="flex items-center gap-1 mt-2">
                 <ArrowUpRight className="w-3.5 h-3.5 text-success" />
-                <span className="text-xs font-semibold text-success">+12.8%</span>
+                <span className="text-xs font-semibold text-success">+8.2%</span>
               </div>
             </div>
           </MetricInfoPopover>
