@@ -427,13 +427,12 @@ const Index = () => {
                             if (active && payload && payload.length) {
                               const data = payload[0].payload;
                               return (
-                                <div className="bg-card border border-border rounded-xl p-3 shadow-xl">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <span className="w-3 h-3 rounded-full" style={{ background: data.color }} />
-                                    <span className="font-bold text-foreground">{data.name}</span>
+                                <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg pointer-events-none">
+                                  <div className="flex items-center gap-2">
+                                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: data.color }} />
+                                    <span className="text-xs font-semibold text-foreground">{data.name}</span>
+                                    <span className="text-sm font-bold" style={{ color: data.color }}>{data.value}</span>
                                   </div>
-                                  <p className="text-2xl font-extrabold" style={{ color: data.color }}>{data.value}</p>
-                                  <p className="text-xs text-muted-foreground mt-1">{data.description}</p>
                                 </div>
                               );
                             }
@@ -446,28 +445,14 @@ const Index = () => {
                       <p className="text-lg font-bold">1,195</p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center gap-2 mt-2">
+                  {/* Color Legend with Labels */}
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-3">
                     {orderStatusData.map((item) => (
-                      <Popover key={item.name}>
-                        <PopoverTrigger asChild>
-                          <button 
-                            className="w-4 h-4 rounded-full cursor-pointer hover:scale-125 transition-transform ring-2 ring-transparent hover:ring-offset-2 hover:ring-offset-card"
-                            style={{ background: item.color }}
-                            title={item.name}
-                          />
-                        </PopoverTrigger>
-                        <PopoverContent 
-                          className="w-auto p-2.5 bg-card/90 backdrop-blur-md border border-border/50 shadow-lg" 
-                          side="top" 
-                          sideOffset={8}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="w-2.5 h-2.5 rounded-full" style={{ background: item.color }} />
-                            <span className="text-xs font-semibold text-foreground">{item.name}</span>
-                            <span className="text-sm font-bold" style={{ color: item.color }}>{item.value}</span>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
+                      <div key={item.name} className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                        <span className="text-[10px] text-muted-foreground truncate">{item.name}</span>
+                        <span className="text-[10px] font-bold text-foreground ml-auto">{item.value}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
