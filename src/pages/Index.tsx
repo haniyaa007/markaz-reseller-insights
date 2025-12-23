@@ -367,215 +367,130 @@ const Index = () => {
           </MetricInfoPopover>
         </div>
 
-        {/* MAIN GRID */}
-        <div className="grid grid-cols-12 gap-5">
+        {/* MAIN GRID - 3 COLUMNS */}
+        <div className="grid grid-cols-12 gap-4">
           
-          {/* LEFT COLUMN */}
-          <div className="col-span-12 xl:col-span-8 space-y-5">
-            
-            {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              {/* Revenue Chart */}
-              <div className="lg:col-span-2 bg-card rounded-2xl p-5 border border-border shadow-card">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-bold text-foreground">Revenue Overview</h3>
-                    <p className="text-xs text-muted-foreground">Monthly revenue and orders trend</p>
-                  </div>
-                  <div className="flex items-center gap-4 text-xs">
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-primary" /> Revenue</span>
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-info" /> Orders</span>
-                  </div>
+          {/* LEFT - Revenue Overview */}
+          <div className="col-span-12 lg:col-span-5 xl:col-span-5">
+            <div className="bg-card rounded-2xl p-5 border border-border shadow-card h-full">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">Revenue Overview</h3>
+                  <p className="text-xs text-muted-foreground">Monthly revenue and orders trend</p>
                 </div>
-                <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={salesData} margin={{ top: 5, right: 50, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.25} />
-                        <stop offset="100%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0.2} />
-                        <stop offset="100%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 90%)" vertical={false} />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} dy={8} />
-                    <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v/1000}k`} />
-                    <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(210, 90%, 55%)" }} />
-                    <Tooltip content={<SalesTooltip />} />
-                    <Area yAxisId="left" type="monotone" dataKey="sales" stroke="hsl(152, 69%, 45%)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
-                    <Area yAxisId="right" type="monotone" dataKey="orders" stroke="hsl(210, 90%, 55%)" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Order Status + Conversion */}
-              <div className="space-y-5">
-                <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
-                  <h3 className="font-bold text-foreground text-sm mb-2">Order Status</h3>
-                  <div className="relative">
-                    <ResponsiveContainer width="100%" height={100}>
-                      <PieChart>
-                        <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={30} outerRadius={45} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                          {orderStatusData.map((entry, i) => (
-                            <Cell key={i} fill={entry.color} className="cursor-pointer hover:opacity-80 transition-opacity" />
-                          ))}
-                        </Pie>
-                        <Tooltip 
-                          content={({ active, payload }) => {
-                            if (active && payload && payload.length) {
-                              const data = payload[0].payload;
-                              return (
-                                <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg pointer-events-none">
-                                  <div className="flex items-center gap-2">
-                                    <span className="w-2.5 h-2.5 rounded-full" style={{ background: data.color }} />
-                                    <span className="text-xs font-semibold text-foreground">{data.name}</span>
-                                    <span className="text-sm font-bold" style={{ color: data.color }}>{data.value}</span>
-                                  </div>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                      <p className="text-lg font-bold">1,195</p>
-                    </div>
-                  </div>
-                  {/* Color Legend with Labels */}
-                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-3">
-                    {orderStatusData.map((item) => (
-                      <div key={item.name} className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
-                        <span className="text-[10px] text-muted-foreground truncate">{item.name}</span>
-                        <span className="text-[10px] font-bold text-foreground ml-auto">{item.value}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <MetricInfoPopover metricKey="conversion">
-                  <div className="bg-card rounded-2xl p-4 border border-border shadow-card group">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
-                        Conversion Rate
-                        <Info className="w-3.5 h-3.5 text-muted-foreground opacity-40 group-hover:opacity-100 transition-opacity" />
-                      </h3>
-                      <div className="text-right">
-                        <p className="text-xl font-bold text-primary">{avgConversion}%</p>
-                        <p className="text-[10px] text-success font-semibold">+0.6% this week</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground mb-2">
-                      <Eye className="w-3 h-3" />
-                      <span>Based on 2,512 impressions</span>
-                    </div>
-                    <ResponsiveContainer width="100%" height={70}>
-                      <BarChart data={conversionData} barCategoryGap="20%">
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} dy={5} />
-                        <Tooltip content={<ConversionTooltip />} cursor={false} />
-                        <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                          {conversionData.map((_, i) => (
-                            <Cell key={i} fill={i === 5 ? "hsl(152, 69%, 45%)" : "hsl(152, 40%, 85%)"} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </MetricInfoPopover>
-              </div>
-            </div>
-
-            {/* Top Products with SORT OPTIONS */}
-            <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
-              <div className="p-4 border-b border-border">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h3 className="font-bold text-foreground">Top Selling Products</h3>
-                    <p className="text-xs text-muted-foreground">Sorted by {productSortOptions.find(o => o.id === productSort)?.label}</p>
-                  </div>
-                  {/* Sort Options */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    {productSortOptions.map((option) => (
-                      <button
-                        key={option.id}
-                        onClick={() => setProductSort(option.id)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
-                          productSort === option.id
-                            ? "bg-primary text-primary-foreground shadow-sm"
-                            : "bg-muted text-muted-foreground hover:bg-muted/80"
-                        )}
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
+                <div className="flex items-center gap-4 text-xs">
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-primary" /> Revenue</span>
+                  <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-info" /> Orders</span>
                 </div>
               </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                      <th className="text-left py-3 px-4">Rank</th>
-                      <th className="text-left py-3 px-4">Product</th>
-                      <th className="text-center py-3 px-4">Rating</th>
-                      <th className="text-right py-3 px-4">Sold</th>
-                      <th className="text-right py-3 px-4">Revenue</th>
-                      <th className="text-right py-3 px-4">Profit</th>
-                      <th className="text-right py-3 px-4">Trend</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/50">
-                    {sortedProducts.map((product, index) => (
-                      <tr key={product.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-3 px-4">
-                          <div className={cn(
-                            "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
-                            index === 0 && "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white",
-                            index === 1 && "bg-gradient-to-br from-gray-300 to-gray-400 text-white",
-                            index === 2 && "bg-gradient-to-br from-amber-600 to-amber-700 text-white",
-                            index > 2 && "bg-muted text-muted-foreground"
-                          )}>
-                            {index + 1}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          <p className="font-semibold text-sm text-foreground">{product.name}</p>
-                          <p className="text-[10px] text-muted-foreground">{product.category}</p>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center justify-center gap-1">
-                            <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                            <span className="font-semibold text-sm">{product.rating}</span>
-                            <span className="text-[10px] text-muted-foreground">({product.reviews})</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-right font-semibold text-sm">{product.sold}</td>
-                        <td className="py-3 px-4 text-right font-semibold text-sm">Rs {product.revenue.toLocaleString()}</td>
-                        <td className="py-3 px-4 text-right font-bold text-sm text-primary">Rs {product.profit.toLocaleString()}</td>
-                        <td className="py-3 px-4 text-right">
-                          <div className={cn(
-                            "inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-semibold",
-                            product.trend > 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
-                          )}>
-                            {product.trend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                            {product.trend > 0 ? "+" : ""}{product.trend}%
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ResponsiveContainer width="100%" height={320}>
+                <AreaChart data={salesData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.25} />
+                      <stop offset="100%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0.2} />
+                      <stop offset="100%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 90%)" vertical={false} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} dy={8} />
+                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v/1000}k`} />
+                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(210, 90%, 55%)" }} />
+                  <Tooltip content={<SalesTooltip />} />
+                  <Area yAxisId="left" type="monotone" dataKey="sales" stroke="hsl(152, 69%, 45%)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
+                  <Area yAxisId="right" type="monotone" dataKey="orders" stroke="hsl(210, 90%, 55%)" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
-          {/* RIGHT COLUMN */}
-          <div className="col-span-12 xl:col-span-4 space-y-4">
+          {/* MIDDLE - Order Status + Conversion */}
+          <div className="col-span-12 lg:col-span-4 xl:col-span-4 space-y-4">
+            <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
+              <h3 className="font-bold text-foreground text-sm mb-3">Order Status</h3>
+              <div className="flex items-center gap-4">
+                <div className="relative flex-shrink-0">
+                  <ResponsiveContainer width={120} height={120}>
+                    <PieChart>
+                      <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                        {orderStatusData.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} className="cursor-pointer hover:opacity-80 transition-opacity" />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg pointer-events-none">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: data.color }} />
+                                  <span className="text-xs font-semibold text-foreground">{data.name}</span>
+                                  <span className="text-sm font-bold" style={{ color: data.color }}>{data.value}</span>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                    <p className="text-xl font-bold">1,195</p>
+                  </div>
+                </div>
+                {/* Legend */}
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
+                  {orderStatusData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                      <span className="text-xs text-muted-foreground">{item.name}</span>
+                      <span className="text-xs font-bold text-foreground ml-auto">{item.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <MetricInfoPopover metricKey="conversion">
+              <div className="bg-card rounded-2xl p-4 border border-border shadow-card group">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                      Conversion Rate
+                      <Info className="w-3.5 h-3.5 text-muted-foreground opacity-40 group-hover:opacity-100 transition-opacity" />
+                    </h3>
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground mt-1">
+                      <Eye className="w-3 h-3" />
+                      <span>Based on 2,512 impressions</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-primary">{avgConversion}%</p>
+                    <p className="text-[10px] text-success font-semibold">+0.6% this week</p>
+                  </div>
+                </div>
+                <ResponsiveContainer width="100%" height={80}>
+                  <BarChart data={conversionData} barCategoryGap="15%">
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)" }} dy={5} />
+                    <Tooltip content={<ConversionTooltip />} cursor={false} />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {conversionData.map((_, i) => (
+                        <Cell key={i} fill={i === 5 ? "hsl(152, 69%, 45%)" : "hsl(152, 40%, 85%)"} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </MetricInfoPopover>
+          </div>
+
+          {/* RIGHT - Customers + Recent Orders */}
+          <div className="col-span-12 lg:col-span-3 xl:col-span-3 space-y-4">
             {/* Customers Card */}
             <MetricInfoPopover metricKey="customers">
               <div className="bg-card rounded-xl p-4 border border-border group">
@@ -596,21 +511,20 @@ const Index = () => {
               </div>
             </MetricInfoPopover>
 
-            {/* Orders Section with ALL FILTERS */}
+            {/* Recent Orders */}
             <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
-              <div className="p-4 border-b border-border">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-foreground">Recent Orders</h3>
-                  <span className="text-xs text-muted-foreground">{filteredOrders.length} orders</span>
+              <div className="p-3 border-b border-border">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-bold text-foreground text-sm">Recent Orders</h3>
+                  <span className="text-[10px] text-muted-foreground">{filteredOrders.length} orders</span>
                 </div>
-                {/* ALL Order Filters */}
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1">
                   {orderFilters.map((filter) => (
                     <button
                       key={filter.id}
                       onClick={() => setOrderFilter(filter.id)}
                       className={cn(
-                        "px-2.5 py-1.5 rounded-full text-[10px] font-semibold transition-all",
+                        "px-2 py-1 rounded-full text-[9px] font-semibold transition-all",
                         orderFilter === filter.id
                           ? "bg-foreground text-background"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -622,35 +536,34 @@ const Index = () => {
                 </div>
               </div>
               
-              {/* Filtered Orders List */}
-              <div className="divide-y divide-border/50 max-h-[320px] overflow-y-auto">
+              <div className="divide-y divide-border/50 max-h-[260px] overflow-y-auto">
                 {filteredOrders.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <Package className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">No orders found</p>
+                  <div className="p-6 text-center">
+                    <Package className="w-8 h-8 text-muted-foreground/40 mx-auto mb-2" />
+                    <p className="text-xs text-muted-foreground">No orders found</p>
                   </div>
                 ) : (
                   filteredOrders.map((order) => {
                     const status = statusConfig[order.status];
                     const StatusIcon = status?.icon || CheckCircle2;
                     return (
-                      <div key={order.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer">
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                      <div key={order.id} className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/30 transition-colors cursor-pointer">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center flex-shrink-0">
                           <span className="text-xs font-bold text-primary">{order.customer[0]}</span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm text-foreground">{order.customer}</p>
-                            <span className={cn("flex items-center gap-0.5 text-[10px] font-medium", status?.color)}>
-                              <StatusIcon className="w-3 h-3" />
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-medium text-xs text-foreground truncate">{order.customer}</p>
+                            <span className={cn("flex items-center gap-0.5 text-[9px] font-medium", status?.color)}>
+                              <StatusIcon className="w-2.5 h-2.5" />
                               {status?.label}
                             </span>
                           </div>
-                          <p className="text-xs text-muted-foreground">{order.id} · {order.date}</p>
+                          <p className="text-[10px] text-muted-foreground">{order.id} · {order.date}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-sm">Rs {order.amount.toLocaleString()}</p>
-                          <span className="text-xs font-semibold text-primary">+Rs {order.profit}</span>
+                        <div className="text-right flex-shrink-0">
+                          <p className="font-semibold text-xs">Rs {order.amount.toLocaleString()}</p>
+                          <span className="text-[10px] font-semibold text-primary">+Rs {order.profit}</span>
                         </div>
                       </div>
                     );
@@ -658,12 +571,95 @@ const Index = () => {
                 )}
               </div>
               
-              <div className="p-3 border-t border-border bg-muted/30">
-                <button className="w-full py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors">
+              <div className="p-2 border-t border-border bg-muted/30">
+                <button className="w-full py-1.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors">
                   View All Orders →
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* TOP SELLING PRODUCTS - Full Width */}
+        <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
+          <div className="p-4 border-b border-border">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-bold text-foreground">Top Selling Products</h3>
+                <p className="text-xs text-muted-foreground">Sorted by {productSortOptions.find(o => o.id === productSort)?.label}</p>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {productSortOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => setProductSort(option.id)}
+                    className={cn(
+                      "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                      productSort === option.id
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                  <th className="text-left py-3 px-4">Rank</th>
+                  <th className="text-left py-3 px-4">Product</th>
+                  <th className="text-center py-3 px-4">Rating</th>
+                  <th className="text-right py-3 px-4">Sold</th>
+                  <th className="text-right py-3 px-4">Revenue</th>
+                  <th className="text-right py-3 px-4">Profit</th>
+                  <th className="text-right py-3 px-4">Trend</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {sortedProducts.map((product, index) => (
+                  <tr key={product.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className={cn(
+                        "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                        index === 0 && "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white",
+                        index === 1 && "bg-gradient-to-br from-gray-300 to-gray-400 text-white",
+                        index === 2 && "bg-gradient-to-br from-amber-600 to-amber-700 text-white",
+                        index > 2 && "bg-muted text-muted-foreground"
+                      )}>
+                        {index + 1}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <p className="font-semibold text-sm text-foreground">{product.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{product.category}</p>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
+                        <span className="font-semibold text-sm">{product.rating}</span>
+                        <span className="text-[10px] text-muted-foreground">({product.reviews})</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-right font-semibold text-sm">{product.sold}</td>
+                    <td className="py-3 px-4 text-right font-semibold text-sm">Rs {product.revenue.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right font-bold text-sm text-primary">Rs {product.profit.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right">
+                      <div className={cn(
+                        "inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-semibold",
+                        product.trend > 0 ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"
+                      )}>
+                        {product.trend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                        {product.trend > 0 ? "+" : ""}{product.trend}%
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
