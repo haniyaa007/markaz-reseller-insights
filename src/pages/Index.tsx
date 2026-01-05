@@ -386,7 +386,7 @@ const Index = () => {
                   <span className="flex items-center gap-1.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-info" /> Orders</span>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={280}>
+              <ResponsiveContainer width="100%" height={380}>
                 <AreaChart data={salesData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
@@ -514,10 +514,10 @@ const Index = () => {
                 <p className="text-2xl font-bold text-primary">{avgDelivery}%</p>
                 <span className="text-xs text-success font-semibold">Avg. Success</span>
               </div>
-              <ResponsiveContainer width="100%" height={100}>
-                <BarChart data={deliveryData} layout="vertical" barCategoryGap="20%">
+              <ResponsiveContainer width="100%" height={140}>
+                <BarChart data={deliveryData} layout="vertical" barCategoryGap="15%">
                   <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v}%`} />
-                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} width={70} />
+                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} width={80} interval={0} />
                   <Tooltip content={<DeliveryTooltip />} cursor={false} />
                   <Bar dataKey="percentage" radius={[0, 6, 6, 0]}>
                     {deliveryData.map((entry, i) => (
