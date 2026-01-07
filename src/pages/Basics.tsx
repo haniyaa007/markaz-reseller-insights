@@ -118,60 +118,68 @@ const Basics = () => {
       <div className="max-w-[1800px] mx-auto p-4 md:p-6 space-y-5">
         
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">Basics</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Key business metrics overview</p>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Date Range */}
-            <div className="relative">
-              <button
-                onClick={() => setShowDateDropdown(!showDateDropdown)}
-                className={cn(
-                  "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all",
-                  showDateDropdown ? "bg-foreground text-background" : "bg-card border border-border hover:border-primary/40"
-                )}
-              >
-                {selectedDateLabel}
-                <ChevronDown className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform", showDateDropdown && "rotate-180")} />
-              </button>
-              {showDateDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-36 sm:w-40 bg-card border border-border rounded-xl shadow-xl z-50 py-1 animate-fade-in">
-                  {dateRanges.map((range) => (
-                    <button
-                      key={range.id}
-                      className={cn(
-                        "w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm transition-colors",
-                        dateRange === range.id ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted"
-                      )}
-                      onClick={() => { setDateRange(range.id); setShowDateDropdown(false); }}
-                    >
-                      {range.label}
-                      {dateRange === range.id && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-                    </button>
-                  ))}
-                </div>
+<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+  <div>
+    <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">Basics</h1>
+    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Key business metrics overview</p>
+  </div>
+  <div className="flex items-center gap-2 sm:gap-3">
+    {/* Date Range */}
+    <div className="relative">
+      <button
+        onClick={() => setShowDateDropdown(!showDateDropdown)}
+        className={cn(
+          "flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all",
+          showDateDropdown ? "bg-foreground text-background" : "bg-card border border-border hover:border-primary/40"
+        )}
+      >
+        {selectedDateLabel}
+        <ChevronDown className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform", showDateDropdown && "rotate-180")} />
+      </button>
+      {showDateDropdown && (
+        <div className="absolute right-0 top-full mt-2 w-36 sm:w-40 bg-card border border-border rounded-xl shadow-xl z-50 py-1 animate-fade-in">
+          {dateRanges.map((range) => (
+            <button
+              key={range.id}
+              className={cn(
+                "w-full flex items-center justify-between px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm transition-colors",
+                dateRange === range.id ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted"
               )}
-            </div>
-            
-            <button 
-              onClick={handleRefresh}
-              disabled={loading}
-              className="p-2 sm:p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-all disabled:opacity-50"
+              onClick={() => { setDateRange(range.id); setShowDateDropdown(false); }}
             >
-              <RefreshCw className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground", loading && "animate-spin")} />
+              {range.label}
+              {dateRange === range.id && <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
             </button>
-            
-            <button className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl gradient-hero text-primary-foreground text-xs sm:text-sm font-semibold shadow-glow hover:opacity-90 transition-all">
-              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-              <span className="hidden sm:inline">Export</span>
-            </button>
-          </div>
+          ))}
         </div>
+      )}
+    </div>
+    
+    <button 
+      onClick={handleRefresh}
+      disabled={loading}
+      className="p-2 sm:p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-all disabled:opacity-50"
+    >
+      <RefreshCw className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground", loading && "animate-spin")} />
+    </button>
+    
+    <button className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl gradient-hero text-primary-foreground text-xs sm:text-sm font-semibold shadow-glow hover:opacity-90 transition-all">
+      <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+      <span className="hidden sm:inline">Export</span>
+    </button>
+  </div>
+</div>
 
-        {/* PRIMARY METRICS */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+{/* DEBUG INFO - Remove later */}
+<div className="bg-yellow-100 border-2 border-yellow-500 p-4 rounded-xl">
+  <p className="font-bold text-black">DEBUG INFO:</p>
+  <p className="text-black">Loading: {loading ? "YES" : "NO"}</p>
+  <p className="text-black">Data: {data ? JSON.stringify(data) : "NULL"}</p>
+  <p className="text-black">Revenue: {data?.total_revenue || "NOT FOUND"}</p>
+</div>
+
+{/* PRIMARY METRICS */}
+<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <MetricInfoPopover metricKey="revenue">
             <div className="col-span-2 lg:col-span-1 gradient-hero rounded-xl sm:rounded-2xl p-4 sm:p-5 text-primary-foreground shadow-glow relative overflow-hidden group">
               <div className="absolute inset-0 opacity-10">
