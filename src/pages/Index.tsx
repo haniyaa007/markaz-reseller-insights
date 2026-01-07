@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Wallet, TrendingUp, Clock, ShoppingBag, Users,
   Download, ArrowUpRight, ArrowDownRight, Star,
@@ -14,6 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { fetchBasicsData, BasicsData } from "@/lib/googlesheet";
 
 // Metric Definitions
 const metricDefinitions: Record<string, { title: string; description: string }> = {
@@ -220,10 +221,29 @@ const Index = () => {
   const [productSort, setProductSort] = useState("delivery");
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [deliveryView, setDeliveryView] = useState<"partners" | "cities">("partners");
+  
+  // Google Sheets Integration
+  const [basicsData, setBasicsData] = useState<BasicsData | null>(null);
+  const [loadingBasics, setLoadingBasics] = useState(true);
 
   const selectedDateLabel = dateRanges.find(r => r.id === dateRange)?.label;
   const deliveryData = deliveryView === "partners" ? deliveryByPartner : deliveryByCities;
   const avgDelivery = (deliveryData.reduce((sum, d) => sum + d.percentage, 0) / deliveryData.length).toFixed(1);
+
+  // Fetch data from Google Sheets
+  useEffect(() => {
+    const loadData = async () => {
+      setLoadingBasics(true);
+      const data = await fetchBasicsData();
+      setBasicsData(data);
+      setLoadingBasics(false);
+    };
+    loadData();
+  }, []);
+
+  const formatCurrency = (value: number) => {
+    return `Rs ${value.toLocaleString('en-PK')}`;
+  };
 
   // Sort products based on selected option
   const sortedProducts = [...topProducts].sort((a, b) => {
@@ -310,7 +330,9 @@ const Index = () => {
                   </p>
                   <Wallet className="w-4 h-4 sm:w-5 sm:h-5 opacity-80" />
                 </div>
-                <p className="text-xl sm:text-2xl md:text-3xl font-extrabold mt-1.5 sm:mt-2">Rs 2,847,560</p>
+                <p className="text-xl sm:text-2xl md:text-3xl font-extrabold mt-1.5 sm:mt-2">
+                  {loadingBasics ? "Loading..." : basicsData ? formatCurrency(basicsData.total_revenue) : "Rs 0"}
+                </p>
                 <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                   <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="text-xs sm:text-sm font-semibold">+18.2%</span>
@@ -328,7 +350,9 @@ const Index = () => {
                 </p>
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-success/10"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-success" /></div>
               </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">Rs 456,780</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
+                {loadingBasics ? "Loading..." : basicsData ? formatCurrency(basicsData.total_profit) : "Rs 0"}
+              </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
                 <span className="text-[10px] sm:text-xs font-semibold text-success">+15.3%</span>
@@ -345,7 +369,9 @@ const Index = () => {
                 </p>
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-info/10"><ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-info" /></div>
               </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">1,247</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
+                {loadingBasics ? "Loading..." : basicsData ? basicsData.total_orders.toLocaleString() : "0"}
+              </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
                 <span className="text-[10px] sm:text-xs font-semibold text-success">+8.2%</span>
@@ -362,7 +388,9 @@ const Index = () => {
                 </p>
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
               </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">74</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
+                {loadingBasics ? "Loading..." : basicsData ? basicsData.pending_inprogress_orders.toLocaleString() : "0"}
+              </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
                 <span className="text-[10px] sm:text-xs font-semibold text-success">-8.5%</span>
@@ -428,7 +456,9 @@ const Index = () => {
                     <span className="text-xs font-semibold text-success">+22.4%</span>
                   </div>
                 </div>
-                <p className="text-2xl font-bold mt-2">486</p>
+                <p className="text-2xl font-bold mt-2">
+                  {loadingBasics ? "Loading..." : basicsData ? basicsData.customers.toLocaleString() : "0"}
+                </p>
               </div>
             </MetricInfoPopover>
 
