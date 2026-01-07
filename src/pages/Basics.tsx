@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Wallet, TrendingUp, Clock, ShoppingBag, Users,
   Download, ArrowUpRight, ArrowDownRight, Info, ChevronDown, Check, RefreshCw
@@ -10,6 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Header } from "@/components/dashboard/Header";
+import { fetchBasicsData, BasicsData } from "@/lib/googlesheet";
 
 // Metric Definitions
 const metricDefinitions: Record<string, { title: string; description: string }> = {
@@ -81,8 +82,34 @@ const MetricInfoPopover = ({ metricKey, children }: { metricKey: string; childre
 const Basics = () => {
   const [dateRange, setDateRange] = useState("30days");
   const [showDateDropdown, setShowDateDropdown] = useState(false);
+  const [data, setData] = useState<BasicsData | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const selectedDateLabel = dateRanges.find(r => r.id === dateRange)?.label;
+
+  // Fetch data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      const fetchedData = await fetchBasicsData();
+      setData(fetchedData);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
+
+  // Refresh data handler
+  const handleRefresh = async () => {
+    setLoading(true);
+    const fetchedData = await fetchBasicsData();
+    setData(fetchedData);
+    setLoading(false);
+  };
+
+  // Format currency
+  const formatCurrency = (value: number) => {
+    return `Rs ${value.toLocaleString('en-PK')}`;
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -128,8 +155,12 @@ const Basics = () => {
               )}
             </div>
             
-            <button className="p-2 sm:p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-all">
-              <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
+            <button 
+              onClick={handleRefresh}
+              disabled={loading}
+              className="p-2 sm:p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-all disabled:opacity-50"
+            >
+              <RefreshCw className={cn("w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground", loading && "animate-spin")} />
             </button>
             
             <button className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl gradient-hero text-primary-foreground text-xs sm:text-sm font-semibold shadow-glow hover:opacity-90 transition-all">
@@ -154,7 +185,9 @@ const Basics = () => {
                   </p>
                   <Wallet className="w-4 h-4 sm:w-5 sm:h-5 opacity-80" />
                 </div>
-                <p className="text-xl sm:text-2xl md:text-3xl font-extrabold mt-1.5 sm:mt-2">Rs 2,847,560</p>
+                <p className="text-xl sm:text-2xl md:text-3xl font-extrabold mt-1.5 sm:mt-2">
+                  {loading ? "Loading..." : data ? formatCurrency(data.total_revenue) : "Rs 0"}
+                </p>
                 <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                   <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span className="text-xs sm:text-sm font-semibold">+18.2%</span>
@@ -172,7 +205,9 @@ const Basics = () => {
                 </p>
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-success/10"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-success" /></div>
               </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">Rs 456,780</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
+                {loading ? "Loading..." : data ? formatCurrency(data.total_profit) : "Rs 0"}
+              </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
                 <span className="text-[10px] sm:text-xs font-semibold text-success">+15.3%</span>
@@ -189,7 +224,9 @@ const Basics = () => {
                 </p>
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-info/10"><ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-info" /></div>
               </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">1,247</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
+                {loading ? "Loading..." : data ? data.total_orders.toLocaleString() : "0"}
+              </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
                 <span className="text-[10px] sm:text-xs font-semibold text-success">+8.2%</span>
@@ -206,7 +243,9 @@ const Basics = () => {
                 </p>
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-primary/10"><Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary" /></div>
               </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">486</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
+                {loading ? "Loading..." : data ? data.customers.toLocaleString() : "0"}
+              </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
                 <span className="text-[10px] sm:text-xs font-semibold text-success">+22.4%</span>
@@ -226,7 +265,9 @@ const Basics = () => {
                 </p>
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
               </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">74</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
+                {loading ? "Loading..." : data ? data.pending_inprogress_orders.toLocaleString() : "0"}
+              </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
                 <span className="text-[10px] sm:text-xs font-semibold text-success">-8.5%</span>
