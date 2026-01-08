@@ -14,7 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { fetchBasicsData, BasicsData } from "@/lib/googlesheet";
+import { fetchSheetData, type SheetData, type TopProduct, filterProductsByPeriod } from "@/lib/googlesheet";
 
 // Metric Definitions
 const metricDefinitions: Record<string, { title: string; description: string }> = {
@@ -68,13 +68,14 @@ const orderFilters = [
   { id: "cancelled", label: "Cancelled", count: 43 },
 ];
 
-// Product Sort Options
-const productSortOptions = [
-  { id: "delivery", label: "Delivery %" },
-  { id: "profit", label: "Profit" },
-  { id: "revenue", label: "Revenue" },
-  { id: "sold", label: "Units Sold" },
-  { id: "rating", label: "Rating" },
+// Product Period Options (mapped from sheet Period values)
+const productPeriodOptions = [
+  { id: "7_DAYS", label: "7 Days" },
+  { id: "30_DAYS", label: "30 Days" },
+  { id: "3_MONTHS", label: "3 Months" },
+  { id: "6_MONTHS", label: "6 Months" },
+  { id: "1_YEAR", label: "1 Year" },
+  { id: "ALL_TIME", label: "All Time" },
 ];
 
 // Sales Chart Data
@@ -115,17 +116,6 @@ const deliveryByCities = [
   { name: "Lahore", delivered: 312, total: 350, percentage: 89.1, color: "hsl(210, 90%, 55%)" },
   { name: "Islamabad", delivered: 198, total: 225, percentage: 88.0, color: "hsl(38, 92%, 50%)" },
   { name: "Faisalabad", delivered: 154, total: 200, percentage: 77.0, color: "hsl(280, 65%, 55%)" },
-];
-
-// Top Products with Delivery %
-const topProducts = [
-  { id: 1, name: "Summer Ultra-short Sunscreen Shirt", category: "Fashion", sold: 420, revenue: 611100, profit: 61110, rating: 4.8, reviews: 156, deliveryRate: 94.5 },
-  { id: 2, name: "Pink Heart Titanium Steel Necklace", category: "Jewelry", sold: 385, revenue: 338800, profit: 33880, rating: 4.9, reviews: 203, deliveryRate: 91.2 },
-  { id: 3, name: "Boys & Girls Quilted Cotton Jacket", category: "Kids", sold: 312, revenue: 1172496, profit: 117250, rating: 4.7, reviews: 89, deliveryRate: 88.7 },
-  { id: 4, name: "Kulomi Pajamas Women's Coral Fleece", category: "Sleepwear", sold: 289, revenue: 621928, profit: 62193, rating: 4.6, reviews: 124, deliveryRate: 86.3 },
-  { id: 5, name: "Double-headed Wax Carving Knife Set", category: "Tools", sold: 245, revenue: 227115, profit: 22712, rating: 4.5, reviews: 67, deliveryRate: 82.1 },
-  { id: 6, name: "Premium Wireless Earbuds Pro", category: "Electronics", sold: 198, revenue: 495000, profit: 49500, rating: 4.4, reviews: 312, deliveryRate: 79.5 },
-  { id: 7, name: "Organic Face Serum Collection", category: "Beauty", sold: 456, revenue: 182400, profit: 54720, rating: 4.85, reviews: 278, deliveryRate: 96.2 },
 ];
 
 // Recent Orders - ALL STATUSES
@@ -218,13 +208,13 @@ const DeliveryTooltip = ({ active, payload }: any) => {
 const Index = () => {
   const [dateRange, setDateRange] = useState("30days");
   const [orderFilter, setOrderFilter] = useState("all");
-  const [productSort, setProductSort] = useState("delivery");
+  const [productPeriod, setProductPeriod] = useState("7_DAYS");
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [deliveryView, setDeliveryView] = useState<"partners" | "cities">("partners");
   
   // Google Sheets Integration
-  const [basicsData, setBasicsData] = useState<BasicsData | null>(null);
-  const [loadingBasics, setLoadingBasics] = useState(true);
+  const [sheetData, setSheetData] = useState<SheetData | null>(null);
+  const [loadingData, setLoadingData] = useState(true);
 
   const selectedDateLabel = dateRanges.find(r => r.id === dateRange)?.label;
   const deliveryData = deliveryView === "partners" ? deliveryByPartner : deliveryByCities;
@@ -233,10 +223,10 @@ const Index = () => {
   // Fetch data from Google Sheets
   useEffect(() => {
     const loadData = async () => {
-      setLoadingBasics(true);
-      const data = await fetchBasicsData();
-      setBasicsData(data);
-      setLoadingBasics(false);
+      setLoadingData(true);
+      const data = await fetchSheetData();
+      setSheetData(data);
+      setLoadingData(false);
     };
     loadData();
   }, []);
@@ -245,17 +235,12 @@ const Index = () => {
     return `Rs ${value.toLocaleString('en-PK')}`;
   };
 
-  // Sort products based on selected option
-  const sortedProducts = [...topProducts].sort((a, b) => {
-    switch (productSort) {
-      case "delivery": return b.deliveryRate - a.deliveryRate;
-      case "profit": return b.profit - a.profit;
-      case "revenue": return b.revenue - a.revenue;
-      case "sold": return b.sold - a.sold;
-      case "rating": return b.rating - a.rating;
-      default: return b.deliveryRate - a.deliveryRate;
-    }
-  }).slice(0, 5);
+  // Filter and sort products by selected period and delivery percentage
+  const filteredProducts = sheetData 
+    ? filterProductsByPeriod(sheetData.topProducts, productPeriod)
+        .sort((a, b) => b.DeliveryPercentage - a.DeliveryPercentage)
+        .slice(0, 5)
+    : [];
 
   // Filter orders based on selected filter
   const filteredOrders = orderFilter === "all" 
@@ -331,7 +316,7 @@ const Index = () => {
                   <Wallet className="w-4 h-4 sm:w-5 sm:h-5 opacity-80" />
                 </div>
                 <p className="text-xl sm:text-2xl md:text-3xl font-extrabold mt-1.5 sm:mt-2">
-                  {loadingBasics ? "Loading..." : basicsData ? formatCurrency(basicsData.total_revenue) : "Rs 0"}
+                  {loadingData ? "Loading..." : sheetData ? formatCurrency(sheetData.basics.total_revenue) : "Rs 0"}
                 </p>
                 <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                   <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -351,7 +336,7 @@ const Index = () => {
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-success/10"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-success" /></div>
               </div>
               <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingBasics ? "Loading..." : basicsData ? formatCurrency(basicsData.total_profit) : "Rs 0"}
+                {loadingData ? "Loading..." : sheetData ? formatCurrency(sheetData.basics.total_profit) : "Rs 0"}
               </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
@@ -370,7 +355,7 @@ const Index = () => {
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-info/10"><ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-info" /></div>
               </div>
               <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingBasics ? "Loading..." : basicsData ? basicsData.total_orders.toLocaleString() : "0"}
+                {loadingData ? "Loading..." : sheetData ? sheetData.basics.total_orders.toLocaleString() : "0"}
               </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
@@ -389,7 +374,7 @@ const Index = () => {
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
               </div>
               <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingBasics ? "Loading..." : basicsData ? basicsData.pending_inprogress_orders.toLocaleString() : "0"}
+                {loadingData ? "Loading..." : sheetData ? sheetData.basics.pending_inprogress_orders.toLocaleString() : "0"}
               </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
@@ -457,7 +442,7 @@ const Index = () => {
                   </div>
                 </div>
                 <p className="text-2xl font-bold mt-2">
-                  {loadingBasics ? "Loading..." : basicsData ? basicsData.customers.toLocaleString() : "0"}
+                  {loadingData ? "Loading..." : sheetData ? sheetData.basics.customers.toLocaleString() : "0"}
                 </p>
               </div>
             </MetricInfoPopover>
@@ -566,16 +551,16 @@ const Index = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 className="font-bold text-foreground">Top Selling Products</h3>
-                <p className="text-xs text-muted-foreground">Sorted by {productSortOptions.find(o => o.id === productSort)?.label}</p>
+                <p className="text-xs text-muted-foreground">Sorted by Delivery % for {productPeriodOptions.find(o => o.id === productPeriod)?.label}</p>
               </div>
               <div className="flex items-center gap-1.5 flex-wrap">
-                {productSortOptions.map((option) => (
+                {productPeriodOptions.map((option) => (
                   <button
                     key={option.id}
-                    onClick={() => setProductSort(option.id)}
+                    onClick={() => setProductPeriod(option.id)}
                     className={cn(
                       "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
-                      productSort === option.id
+                      productPeriod === option.id
                         ? "bg-primary text-primary-foreground shadow-sm"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
                     )}
@@ -586,64 +571,26 @@ const Index = () => {
               </div>
             </div>
           </div>
-          {/* Mobile Card View */}
-          <div className="block md:hidden space-y-3 p-4">
-            {sortedProducts.map((product, index) => (
-              <div key={product.id} className="bg-muted/30 rounded-xl p-4 border border-border/50">
-                <div className="flex items-start gap-3">
-                  <div className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0",
-                    index === 0 && "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white",
-                    index === 1 && "bg-gradient-to-br from-gray-300 to-gray-400 text-white",
-                    index === 2 && "bg-gradient-to-br from-amber-600 to-amber-700 text-white",
-                    index > 2 && "bg-muted text-muted-foreground"
-                  )}>
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-foreground line-clamp-1">{product.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{product.category}</p>
-                    <div className="flex items-center gap-3 mt-2 flex-wrap">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                        <span className="text-xs font-medium">{product.rating}</span>
-                      </div>
-                      <span className="text-xs text-muted-foreground">{product.sold} sold</span>
-                      <span className="text-xs font-bold text-primary">Rs {product.profit.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <div className={cn(
-                    "px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1",
-                    product.deliveryRate >= 90 ? "bg-success/10 text-success" : product.deliveryRate >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
-                  )}>
-                    <Truck className="w-3 h-3" />
-                    {product.deliveryRate}%
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                  <th className="text-left py-3 px-4">Rank</th>
-                  <th className="text-left py-3 px-4">Product</th>
-                  <th className="text-center py-3 px-4">Rating</th>
-                  <th className="text-right py-3 px-4">Sold</th>
-                  <th className="text-right py-3 px-4">Revenue</th>
-                  <th className="text-right py-3 px-4">Profit</th>
-                  <th className="text-right py-3 px-4">Delivery %</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {sortedProducts.map((product, index) => (
-                  <tr key={product.id} className="hover:bg-muted/30 transition-colors">
-                    <td className="py-3 px-4">
+
+          {loadingData ? (
+            <div className="p-8 text-center">
+              <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground">Loading products...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div className="p-8 text-center">
+              <Package className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No products found for this period</p>
+            </div>
+          ) : (
+            <>
+              {/* Mobile Card View */}
+              <div className="block md:hidden space-y-3 p-4">
+                {filteredProducts.map((product, index) => (
+                  <div key={product.ProductCode} className="bg-muted/30 rounded-xl p-4 border border-border/50">
+                    <div className="flex items-start gap-3">
                       <div className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                        "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0",
                         index === 0 && "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white",
                         index === 1 && "bg-gradient-to-br from-gray-300 to-gray-400 text-white",
                         index === 2 && "bg-gradient-to-br from-amber-600 to-amber-700 text-white",
@@ -651,74 +598,124 @@ const Index = () => {
                       )}>
                         {index + 1}
                       </div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <p className="font-semibold text-sm text-foreground">{product.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{product.category}</p>
-                    </td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center justify-center gap-1">
-                        <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-500" />
-                        <span className="font-semibold text-sm">{product.rating}</span>
-                        <span className="text-[10px] text-muted-foreground">({product.reviews})</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm text-foreground line-clamp-2">{product.Product}</p>
+                        <p className="text-[10px] text-muted-foreground">{product.Category} · {product.Subcategory}</p>
+                        <div className="flex items-center gap-3 mt-2 flex-wrap">
+                          <span className="text-xs text-muted-foreground">{product.TotalOrders} orders</span>
+                          <span className="text-xs text-success font-semibold">{product.DeliveredOrders} delivered</span>
+                        </div>
                       </div>
-                    </td>
-                    <td className="py-3 px-4 text-right font-semibold text-sm">{product.sold}</td>
-                    <td className="py-3 px-4 text-right font-semibold text-sm">Rs {product.revenue.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right font-bold text-sm text-primary">Rs {product.profit.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right">
                       <div className={cn(
-                        "inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-semibold",
-                        product.deliveryRate >= 90 ? "bg-success/10 text-success" : product.deliveryRate >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                        "px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1",
+                        product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                       )}>
                         <Truck className="w-3 h-3" />
-                        {product.deliveryRate}%
+                        {product.DeliveryPercentage.toFixed(1)}%
                       </div>
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
+              
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                      <th className="text-left py-3 px-4">Rank</th>
+                      <th className="text-left py-3 px-4">Product</th>
+                      <th className="text-left py-3 px-4">Category</th>
+                      <th className="text-left py-3 px-4">Supplier</th>
+                      <th className="text-center py-3 px-4">Status</th>
+                      <th className="text-right py-3 px-4">Total Orders</th>
+                      <th className="text-right py-3 px-4">Delivered</th>
+                      <th className="text-right py-3 px-4">Delivery %</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/50">
+                    {filteredProducts.map((product, index) => (
+                      <tr key={product.ProductCode} className="hover:bg-muted/30 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className={cn(
+                            "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
+                            index === 0 && "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white",
+                            index === 1 && "bg-gradient-to-br from-gray-300 to-gray-400 text-white",
+                            index === 2 && "bg-gradient-to-br from-amber-600 to-amber-700 text-white",
+                            index > 2 && "bg-muted text-muted-foreground"
+                          )}>
+                            {index + 1}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <p className="font-semibold text-sm text-foreground max-w-xs">{product.Product}</p>
+                          <p className="text-[10px] text-muted-foreground">{product.ProductCode}</p>
+                        </td>
+                        <td className="py-3 px-4">
+                          <p className="text-sm font-medium">{product.Category}</p>
+                          <p className="text-[10px] text-muted-foreground">{product.Subcategory}</p>
+                        </td>
+                        <td className="py-3 px-4 text-sm">{product.Supplier}</td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={cn(
+                            "inline-block px-2 py-1 rounded-full text-[10px] font-semibold",
+                            product.ProductStatus === "Active" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+                          )}>
+                            {product.ProductStatus}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right font-semibold text-sm">{product.TotalOrders}</td>
+                        <td className="py-3 px-4 text-right font-semibold text-sm text-success">{product.DeliveredOrders}</td>
+                        <td className="py-3 px-4 text-right">
+                          <div className={cn(
+                            "inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-semibold",
+                            product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                          )}>
+                            <Truck className="w-3 h-3" />
+                            {product.DeliveryPercentage.toFixed(1)}%
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
 
-        {/* ROW 6: RECENT ORDERS - Full Width at Bottom */}
-        <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-foreground">Recent Orders</h3>
-              <span className="text-xs text-muted-foreground">{filteredOrders.length} orders</span>
-            </div>
-            <div className="flex flex-wrap gap-1.5">
-              {orderFilters.map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => setOrderFilter(filter.id)}
-                  className={cn(
-                    "px-2.5 py-1.5 rounded-full text-[10px] font-semibold transition-all",
-                    orderFilter === filter.id
-                      ? "bg-foreground text-background"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                  )}
-                >
-                  {filter.label} <span className="opacity-70">{filter.count}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <div className="divide-y divide-border/50 max-h-[300px] overflow-y-auto">
-            {filteredOrders.length === 0 ? (
-              <div className="p-8 text-center">
-                <Package className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No orders found</p>
+        {/* ROW 6: RECENT ORDERS - With Coming Soon Overlay */}
+        <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden relative">
+          {/* Blurred Background Content */}
+          <div className="blur-sm pointer-events-none select-none">
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-bold text-foreground">Recent Orders</h3>
+                <span className="text-xs text-muted-foreground">{filteredOrders.length} orders</span>
               </div>
-            ) : (
-              filteredOrders.map((order) => {
+              <div className="flex flex-wrap gap-1.5">
+                {orderFilters.map((filter) => (
+                  <button
+                    key={filter.id}
+                    className={cn(
+                      "px-2.5 py-1.5 rounded-full text-[10px] font-semibold transition-all",
+                      orderFilter === filter.id
+                        ? "bg-foreground text-background"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    {filter.label} <span className="opacity-70">{filter.count}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="divide-y divide-border/50 max-h-[300px] overflow-y-auto">
+              {filteredOrders.map((order) => {
                 const status = statusConfig[order.status];
                 const StatusIcon = status?.icon || CheckCircle2;
                 return (
-                  <div key={order.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 transition-colors cursor-pointer">
+                  <div key={order.id} className="flex items-center gap-3 px-4 py-3">
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                       <span className="text-xs font-bold text-primary">{order.customer[0]}</span>
                     </div>
@@ -738,14 +735,27 @@ const Index = () => {
                     </div>
                   </div>
                 );
-              })
-            )}
+              })}
+            </div>
+            
+            <div className="p-3 border-t border-border bg-muted/30">
+              <button className="w-full py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors">
+                View All Orders →
+              </button>
+            </div>
           </div>
-          
-          <div className="p-3 border-t border-border bg-muted/30">
-            <button className="w-full py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors">
-              View All Orders →
-            </button>
+
+          {/* Coming Soon Overlay */}
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+            <div className="text-center p-8">
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                <Clock className="w-10 h-10 text-primary" />
+              </div>
+              <h3 className="text-2xl font-bold text-foreground mb-2">Coming Soon</h3>
+              <p className="text-sm text-muted-foreground max-w-md">
+                Recent orders tracking is currently under development. Check back soon for real-time order updates!
+              </p>
+            </div>
           </div>
         </div>
       </div>
