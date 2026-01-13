@@ -84,6 +84,27 @@ export function getUniquePeriods(products: TopProduct[]): string[] {
 
 // Helper function to fetch delivery performance data
 export async function fetchDeliveryPerformanceData(): Promise<DeliveryPerformanceData[]> {
-  const data = await fetchSheetData();
-  return data.deliveryPerformance;
+  try {
+    const response = await fetch(GOOGLE_SHEET_URL);
+    const result = await response.json();
+    
+    console.log('Google Sheets API Response:', result); // Debug log
+    
+    // Check if deliveryPerformance exists in response
+    if (result.success && result.deliveryPerformance) {
+      return result.deliveryPerformance;
+    }
+    
+    // If no deliveryPerformance field, try to find it in other possible locations
+    if (result.data && Array.isArray(result.data)) {
+      console.log('Trying to extract delivery data from result.data');
+      return result.data;
+    }
+    
+    console.log('No delivery performance data found');
+    return [];
+  } catch (error) {
+    console.error('Error fetching delivery performance data:', error);
+    return [];
+  }
 }

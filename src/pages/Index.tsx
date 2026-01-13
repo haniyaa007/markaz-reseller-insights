@@ -218,6 +218,9 @@ const Index = () => {
           fetchDeliveryPerformanceData()
         ]);
         
+        console.log('Sheet Data Result:', sheetDataResult); // Debug log
+        console.log('Delivery Data Result:', deliveryDataResult); // Debug log
+        
         setSheetData(sheetDataResult);
         
         // Transform delivery data
@@ -229,8 +232,10 @@ const Index = () => {
             percentage: item.Percentage,
             color: getColorForPartner(item.Partner)
           }));
+          console.log('Transformed Delivery Data:', transformedDeliveryData); // Debug log
           setDeliveryData(transformedDeliveryData);
         } else {
+          console.log('No delivery data to transform');
           setDeliveryData([]);
         }
       } catch (error) {
