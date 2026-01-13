@@ -8,7 +8,7 @@ import {
  import { cn } from "@/lib/utils";
  import { 
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  Cell, BarChart, Bar, CartesianGrid
+  Cell, BarChart, Bar, CartesianGrid, PieChart, Pie
  } from "recharts";
 
 import {
@@ -68,6 +68,15 @@ const productPeriodOptions = [
   { id: "6_MONTHS", label: "6 Months" },
   { id: "1_YEAR", label: "1 Year" },
   { id: "ALL_TIME", label: "All Time" },
+];
+
+// Order Status Data (for Coming Soon UI)
+const orderStatusData = [
+  { name: "Delivered", value: 892, color: "hsl(152, 69%, 45%)", description: "Successfully completed orders" },
+  { name: "In Transit", value: 186, color: "hsl(210, 90%, 55%)", description: "Orders currently being shipped" },
+  { name: "Pending", value: 74, color: "hsl(38, 92%, 50%)", description: "Orders awaiting processing" },
+  { name: "Cancelled", value: 43, color: "hsl(0, 72%, 51%)", description: "Orders that were cancelled" },
+  { name: "Returned", value: 52, color: "hsl(280, 65%, 55%)", description: "Orders that were returned" },
 ];
 
 // Recent Orders Static Data (for Coming Soon UI)
@@ -443,12 +452,45 @@ const Index = () => {
               </div>
             </MetricInfoPopover>
 
-            {/* Order Status */}
-            <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
-              <h3 className="font-bold text-foreground text-sm mb-3">Order Status</h3>
-              <div className="p-8 text-center">
-                <Package className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">No order status data</p>
+            {/* Order Status - Coming Soon */}
+            <div className="bg-card rounded-2xl p-4 border border-border shadow-card relative overflow-hidden">
+              <div className="opacity-20">
+                <h3 className="font-bold text-foreground text-sm mb-3">Order Status</h3>
+                <div className="flex items-center gap-4">
+                  <div className="relative flex-shrink-0">
+                    <ResponsiveContainer width={120} height={120}>
+                      <PieChart>
+                        <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                          {orderStatusData.map((entry, i) => (
+                            <Cell key={i} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                      <p className="text-xl font-bold">1,195</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
+                    {orderStatusData.map((item) => (
+                      <div key={item.name} className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                        <span className="text-xs text-muted-foreground">{item.name}</span>
+                        <span className="text-xs font-bold text-foreground ml-auto">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              {/* Coming Soon Overlay */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/80 backdrop-blur-[1px]">
+                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                  <Clock className="w-6 h-6 text-primary" />
+                </div>
+                <p className="text-base font-bold text-foreground">Coming Soon</p>
+                <p className="text-xs text-muted-foreground text-center px-4 mt-1">
+                  Order status tracking jald aa raha hai!
+                </p>
               </div>
             </div>
 
@@ -581,7 +623,6 @@ const Index = () => {
                       <th className="text-left py-3 px-4">Rank</th>
                       <th className="text-left py-3 px-4">Product</th>
                       <th className="text-left py-3 px-4">Category</th>
-                      <th className="text-left py-3 px-4">Subcategory</th>
                       <th className="text-right py-3 px-4">Total Orders</th>
                       <th className="text-right py-3 px-4">Delivered</th>
                       <th className="text-right py-3 px-4">Delivery %</th>
@@ -609,8 +650,6 @@ const Index = () => {
                           <p className="text-sm font-medium">{product.Category}</p>
                           <p className="text-[10px] text-muted-foreground">{product.Subcategory}</p>
                         </td>
-                        <td className="py-3 px-4 text-sm">{product.Subcategory}</td>
-
                         <td className="py-3 px-4 text-right font-semibold text-sm">{product.TotalOrders}</td>
                         <td className="py-3 px-4 text-right font-semibold text-sm text-success">{product.DeliveredOrders}</td>
                         <td className="py-3 px-4 text-right">
@@ -698,12 +737,10 @@ const Index = () => {
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                 <Clock className="w-10 h-10 text-primary" />
               </div>
-              <h3 className="text-xl font-bold text-foreground mb-2">Recent Orders</h3>
-              <p className="text-sm text-muted-foreground mb-4">Coming Soon</p>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full text-primary text-sm font-semibold">
-                <Info className="w-4 h-4" />
-                This section is under development
-              </div>
+              <h3 className="text-2xl font-bold text-foreground mb-2">Coming Soon</h3>
+              <p className="text-sm text-muted-foreground max-w-md">
+                Recent orders tracking abhi development mein hai. Jald real-time order updates ke liye wapas aayein!
+              </p>
             </div>
           </div>
         </div>
