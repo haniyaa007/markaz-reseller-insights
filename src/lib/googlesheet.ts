@@ -1,7 +1,8 @@
 // src/lib/googlesheet.ts
 
-const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwOpUgbqRGJNy7SVW6e-uc8YpAJ7lYVqeFH-pD0RoM5FkwzhcvoYf-q8r-IUFH42cnY/exec';
+const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxQvMRJB4sXof1qdKWQPRhXwsZcStC0WJ5HKILlHa2NyCxhjGs5QVJ5C7OYcjmtqfg/exec';
 
+// Basics sheet data interface
 export interface BasicsData {
   total_revenue: number;
   total_profit: number;
@@ -10,101 +11,162 @@ export interface BasicsData {
   customers: number;
 }
 
+// Order vs Revenue Chart data interface
+export interface OrderRevenueData {
+  period: string;
+  revenue: number;
+  orders: number;
+  profit: number;
+}
+
+// Delivery Performance by Courier interface
+export interface DeliveryPerformanceCourier {
+  partner_name: string;
+  delivered_orders: number;
+  total_orders: number;
+  success_rate: number;
+}
+
+// Delivery Performance by City interface
+export interface DeliveryPerformanceCity {
+  city_name: string;
+  delivered_orders: number;
+  total_orders: number;
+  success_rate: number;
+}
+
+// Profit Band data interface
+export interface ProfitBand {
+  band_name: string;
+  min_profit: number;
+  max_profit: number;
+  product_count: number;
+  total_profit: number;
+  percentage: number;
+}
+
+// Top Products data interface
 export interface TopProduct {
   Period: string;
   Category: string;
   Subcategory: string;
-  Supplier: string;
   ProductCode: string;
   Product: string;
-  ProductStatus: string;
   TotalOrders: number;
   DeliveredOrders: number;
-  DeliveryPercentage: number;
+  DeliveryPercentile: number;
 }
 
-export interface DeliveryPerformanceData {
-  Partner: string;
-  Delivered: number;
-  Total: number;
-  Percentage: number;
-}
-
+// Main sheet data interface
 export interface SheetData {
   basics: BasicsData;
+  orderRevenueChart: OrderRevenueData[];
+  deliveryPerformanceCourier: DeliveryPerformanceCourier[];
+  deliveryPerformanceCity: DeliveryPerformanceCity[];
+  profitBand: ProfitBand[];
   topProducts: TopProduct[];
-  deliveryPerformance: DeliveryPerformanceData[];
 }
 
-export async function fetchSheetData(): Promise<SheetData> {
+// Fetch data from specific sheet
+async function fetchFromSheet(sheetName: string): Promise<any> {
   try {
-    const response = await fetch(GOOGLE_SHEET_URL);
+    const response = await fetch(`${GOOGLE_SHEET_URL}?sheet=${sheetName}`);
     const result = await response.json();
     
     if (result.success) {
-      return {
-        basics: result.data,
-        topProducts: result.topProducts || [],
-        deliveryPerformance: result.deliveryPerformance || []
-      };
+      return result.data;
     }
     
-    throw new Error('Failed to fetch data from Google Sheet');
+    throw new Error(`Failed to fetch data from ${sheetName} sheet`);
   } catch (error) {
-    console.error('Error fetching Google Sheet data:', error);
-    return {
-      basics: {
-        total_revenue: 0,
-        total_profit: 0,
-        total_orders: 0,
-        pending_inprogress_orders: 0,
-        customers: 0
-      },
-      topProducts: [],
-      deliveryPerformance: []
-    };
+    console.error(`Error fetching ${sheetName} data:`, error);
+    return null;
   }
 }
 
-// Keep the old function for backwards compatibility
-export async function fetchBasicsData(): Promise<BasicsData> {
-  const data = await fetchSheetData();
-  return data.basics;
+// Main function to fetch all sheet data
+export async function fetchSheetData(): Promise<SheetData> {
+  try {
+    const [basics, orderRevenueChart, deliveryPerformanceCourier, deliveryPerformanceCity, profitBand, topProducts] = await Promise.all([
+      fetchFromSheet('basics'),
+      fetchFromSheet('ordervsrevenuechart'),
+      fetchFromSheet('deliveryperformancecourier'),
+      fetchFromSheet('deliveryperformancecity'),
+      fetchFromSheet('profitband'),
+      fetchFromSheet('topproducts')
+    ]);
+
+    return {
+      basics: basics || getDefaultBasicsData(),
+      orderRevenueChart: orderRevenueChart || [],
+      deliveryPerformanceCourier: deliveryPerformanceCourier || [],
+      deliveryPerformanceCity: deliveryPerformanceCity || [],
+      profitBand: profitBand || [],
+      topProducts: topProducts || []
+    };
+  } catch (error) {
+    console.error('Error fetching sheet data:', error);
+    return getDefaultSheetData();
+  }
 }
 
-// Helper function to filter products by period
+// Fetch data for specific time period
+export async function fetchSheetDataByPeriod(period: string): Promise<SheetData> {
+  try {
+    const data = await fetchSheetData();
+    
+    // Filter data based on period
+    const filteredData: SheetData = {
+      ...data,
+      topProducts: data.topProducts.filter(product => product.Period === period),
+      orderRevenueChart: data.orderRevenueChart.filter(item => item.period === period),
+      deliveryPerformanceCourier: data.deliveryPerformanceCourier,
+      deliveryPerformanceCity: data.deliveryPerformanceCity,
+      profitBand: data.profitBand
+    };
+
+    return filteredData;
+  } catch (error) {
+    console.error('Error fetching filtered sheet data:', error);
+    return getDefaultSheetData();
+  }
+}
+
+// Default data functions
+function getDefaultBasicsData(): BasicsData {
+  return {
+    total_revenue: 0,
+    total_profit: 0,
+    total_orders: 0,
+    pending_inprogress_orders: 0,
+    customers: 0
+  };
+}
+
+function getDefaultSheetData(): SheetData {
+  return {
+    basics: getDefaultBasicsData(),
+    orderRevenueChart: [],
+    deliveryPerformanceCourier: [],
+    deliveryPerformanceCity: [],
+    profitBand: [],
+    topProducts: []
+  };
+}
+
+// Helper functions for filtering
 export function filterProductsByPeriod(products: TopProduct[], period: string): TopProduct[] {
   return products.filter(product => product.Period === period);
 }
 
-// Helper function to get unique periods
+export function filterOrderRevenueByPeriod(data: OrderRevenueData[], period: string): OrderRevenueData[] {
+  return data.filter(item => item.period === period);
+}
+
 export function getUniquePeriods(products: TopProduct[]): string[] {
   return [...new Set(products.map(product => product.Period))];
 }
 
-// Helper function to fetch delivery performance data
-export async function fetchDeliveryPerformanceData(): Promise<DeliveryPerformanceData[]> {
-  try {
-    const response = await fetch(GOOGLE_SHEET_URL);
-    const result = await response.json();
-    
-    console.log('Google Sheets API Response:', result); // Debug log
-    
-    // Check if deliveryPerformance exists in response
-    if (result.success && result.deliveryPerformance) {
-      return result.deliveryPerformance;
-    }
-    
-    // If no deliveryPerformance field, try to find it in other possible locations
-    if (result.data && Array.isArray(result.data)) {
-      console.log('Trying to extract delivery data from result.data');
-      return result.data;
-    }
-    
-    console.log('No delivery performance data found');
-    return [];
-  } catch (error) {
-    console.error('Error fetching delivery performance data:', error);
-    return [];
-  }
+export function getUniqueOrderRevenuePeriods(data: OrderRevenueData[]): string[] {
+  return [...new Set(data.map(item => item.period))];
 }
