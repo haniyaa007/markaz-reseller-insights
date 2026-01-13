@@ -418,24 +418,28 @@ const Index = () => {
             </div>
           </MetricInfoPopover>
 
-          <MetricInfoPopover metricKey="pending">
-            <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
-              <div className="flex items-center justify-between">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
-                  Pending
-                  <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity hidden sm:block" />
-                </p>
-                <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
-              </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingData ? "Loading..." : sheetData ? sheetData.basics.pending_inprogress_orders.toLocaleString() : "0"}
+          {/* Pending Card - Coming Soon */}
+          <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card relative overflow-hidden">
+            <div className="flex items-center justify-between opacity-30">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
+                Pending
+                <Info className="w-3 h-3 opacity-40 hidden sm:block" />
               </p>
-              <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
-                <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
-                <span className="text-[10px] sm:text-xs font-semibold text-success">-8.5%</span>
-              </div>
+              <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
             </div>
-          </MetricInfoPopover>
+            <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2 opacity-30">4</p>
+            <div className="flex items-center gap-1 mt-1.5 sm:mt-2 opacity-30">
+              <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
+              <span className="text-[10px] sm:text-xs font-semibold text-success">-8.5%</span>
+            </div>
+            {/* Coming Soon Overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/80 backdrop-blur-[1px]">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-warning/10 flex items-center justify-center mb-2">
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
+              </div>
+              <p className="text-sm sm:text-base font-bold text-foreground">Coming Soon</p>
+            </div>
+          </div>
         </div>
 
         {/* ROW 2-4: Revenue Overview (left) + Customers/Order Status/Delivery (right) */}
