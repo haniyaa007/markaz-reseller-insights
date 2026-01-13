@@ -1,20 +1,22 @@
 import { useState, useEffect } from "react";
 import { 
   Wallet, TrendingUp, Clock, ShoppingBag, Users,
-  Download, ArrowUpRight, ArrowDownRight, Star,
-  CheckCircle2, Truck, XCircle, Package, ChevronDown, Check, RefreshCw, AlertCircle, Info
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { 
+  Download, ArrowUpRight, ArrowDownRight,
+  Truck, Package, ChevronDown, Check, RefreshCw, Info,
+  CheckCircle2, XCircle, AlertCircle
+ } from "lucide-react";
+ import { cn } from "@/lib/utils";
+ import { 
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, BarChart, Bar, CartesianGrid
-} from "recharts";
+  Cell, BarChart, Bar, CartesianGrid, PieChart, Pie
+ } from "recharts";
+
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { fetchSheetData, type SheetData, type TopProduct, filterProductsByPeriod, fetchDeliveryPerformanceData, type DeliveryPerformanceData } from "@/lib/googlesheet";
+ import { fetchSheetDataByPeriod, type SheetData, filterProductsByPeriod } from "@/lib/googlesheet";
 
 // Metric Definitions
 const metricDefinitions: Record<string, { title: string; description: string }> = {
@@ -58,16 +60,6 @@ const dateRanges = [
   { id: "lifetime", label: "All Time" },
 ];
 
-// Order Filters - ALL RESTORED
-const orderFilters = [
-  { id: "all", label: "All", count: 1247 },
-  { id: "in-progress", label: "In-progress", count: 186 },
-  { id: "shippers-advice", label: "Shipper's Advice", count: 74 },
-  { id: "delivered", label: "Delivered", count: 892 },
-  { id: "returned", label: "Returned", count: 52 },
-  { id: "cancelled", label: "Cancelled", count: 43 },
-];
-
 // Product Period Options (mapped from sheet Period values)
 const productPeriodOptions = [
   { id: "7_DAYS", label: "7 Days" },
@@ -78,23 +70,7 @@ const productPeriodOptions = [
   { id: "ALL_TIME", label: "All Time" },
 ];
 
-// Sales Chart Data
-const salesData = [
-  { name: "Jan", sales: 145000, orders: 89 },
-  { name: "Feb", sales: 198000, orders: 124 },
-  { name: "Mar", sales: 167000, orders: 98 },
-  { name: "Apr", sales: 234000, orders: 156 },
-  { name: "May", sales: 189000, orders: 132 },
-  { name: "Jun", sales: 267000, orders: 178 },
-  { name: "Jul", sales: 298000, orders: 195 },
-  { name: "Aug", sales: 245000, orders: 167 },
-  { name: "Sep", sales: 312000, orders: 208 },
-  { name: "Oct", sales: 356000, orders: 234 },
-  { name: "Nov", sales: 389000, orders: 258 },
-  { name: "Dec", sales: 423000, orders: 289 },
-];
-
-// Order Status Data
+// Order Status Data (for Coming Soon UI)
 const orderStatusData = [
   { name: "Delivered", value: 892, color: "hsl(152, 69%, 45%)", description: "Successfully completed orders" },
   { name: "In Transit", value: 186, color: "hsl(210, 90%, 55%)", description: "Orders currently being shipped" },
@@ -152,7 +128,7 @@ const profitBandsData: Record<string, ProfitBandData[]> = {
   ],
 };
 
-// Recent Orders - ALL STATUSES
+// Recent Orders Static Data (for Coming Soon UI)
 const allOrders = [
   { id: "ORD-7829", customer: "Ahmed K.", amount: 880, profit: 88, status: "delivered", date: "Dec 20" },
   { id: "ORD-7828", customer: "Fatima A.", amount: 1455, profit: 145, status: "in-progress", date: "Dec 19" },
@@ -164,6 +140,15 @@ const allOrders = [
   { id: "ORD-7822", customer: "Sana T.", amount: 2890, profit: 289, status: "in-progress", date: "Dec 13" },
   { id: "ORD-7821", customer: "Omar K.", amount: 1750, profit: 175, status: "shippers-advice", date: "Dec 12" },
   { id: "ORD-7820", customer: "Nadia S.", amount: 3200, profit: 320, status: "delivered", date: "Dec 11" },
+];
+
+const orderFilters = [
+  { id: "all", label: "All", count: 1247 },
+  { id: "in-progress", label: "In-progress", count: 186 },
+  { id: "shippers-advice", label: "Shipper's Advice", count: 74 },
+  { id: "delivered", label: "Delivered", count: 892 },
+  { id: "returned", label: "Returned", count: 52 },
+  { id: "cancelled", label: "Cancelled", count: 43 },
 ];
 
 const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
@@ -248,85 +233,70 @@ const Index = () => {
   
   // Google Sheets Integration
   const [sheetData, setSheetData] = useState<SheetData | null>(null);
-  const [deliveryData, setDeliveryData] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   const selectedDateLabel = dateRanges.find(r => r.id === dateRange)?.label;
-  const avgDelivery = deliveryData.length > 0 
-    ? (deliveryData.reduce((sum, d) => sum + d.percentage, 0) / deliveryData.length).toFixed(1)
-    : "0.0";
+  
+  // Map date range IDs to sheet period names
+  const getPeriodFromRange = (rangeId: string): string => {
+    const mapping: Record<string, string> = {
+      "7days": "7_DAYS",
+      "30days": "30_DAYS", 
+      "3months": "3_MONTHS",
+      "6months": "6_MONTHS",
+      "1year": "1_YEAR",
+      "lifetime": "ALL_TIME"
+    };
+    return mapping[rangeId] || "30_DAYS";
+  };
 
-  // Fetch data from Google Sheets
+  const currentPeriod = getPeriodFromRange(dateRange);
+  
+  // Fetch data from Google Sheets when component mounts or date range changes
   useEffect(() => {
     const loadData = async () => {
       setLoadingData(true);
       try {
-        // Fetch both basics data and delivery performance data
-        const [sheetDataResult, deliveryDataResult] = await Promise.all([
-          fetchSheetData(),
-          fetchDeliveryPerformanceData()
-        ]);
-        
-        setSheetData(sheetDataResult);
-        
-        // Transform delivery data
-        if (deliveryDataResult && deliveryDataResult.length > 0) {
-          const transformedDeliveryData = deliveryDataResult.map((item: DeliveryPerformanceData) => ({
-            name: item.Partner,
-            delivered: item.Delivered,
-            total: item.Total,
-            percentage: item.Percentage,
-            color: getColorForPartner(item.Partner)
-          }));
-          setDeliveryData(transformedDeliveryData);
-        } else {
-          setDeliveryData([]);
-        }
+        const data = await fetchSheetDataByPeriod(currentPeriod);
+        setSheetData(data);
       } catch (error) {
-        console.error('Error loading data:', error);
-        setSheetData(null);
-        setDeliveryData([]);
+        console.error('Error loading sheet data:', error);
       } finally {
         setLoadingData(false);
       }
     };
     loadData();
-  }, []);
+  }, [dateRange]);
 
-  const getColorForPartner = (partner: string): string => {
-    const colors: Record<string, string> = {
-      "TCS": "hsl(152, 69%, 45%)",
-      "PostEx": "hsl(210, 90%, 55%)",
-      "Leopards": "hsl(38, 92%, 50%)",
-      "M&P": "hsl(280, 65%, 55%)",
-      "Karachi": "hsl(152, 69%, 45%)",
-      "Lahore": "hsl(210, 90%, 55%)",
-      "Islamabad": "hsl(38, 92%, 50%)",
-      "Faisalabad": "hsl(280, 65%, 55%)",
-      "Rawalpindi": "hsl(340, 75%, 55%)"
+  const revenueChartData = (sheetData?.orderRevenueChart || []).map((row: any) => ({
+    name: row.month_name ?? row.name ?? row.month ?? row.period ?? "",
+    sales: Number(row.total_revenue ?? row.revenue ?? row.sales ?? 0),
+    orders: Number(row.total_orders ?? row.orders ?? 0),
+  }));
+
+  const deliveryRaw = deliveryView === "partners" ? (sheetData?.deliveryPerformanceCourier || []) : (sheetData?.deliveryPerformanceCity || []);
+  const deliveryData = deliveryRaw.map((row: any) => {
+    const successRate = Number(row.success_rate ?? row.percentage ?? 0);
+    const pct = successRate <= 1 ? successRate * 100 : successRate;
+    return {
+      name: row.partner ?? row.partner_name ?? row.partnr ?? row.city ?? row.city_name ?? row.name ?? "",
+      delivered: Number(row.successful_deliv ?? row.successful_deliveries ?? row.successful_deliveries ?? row.delivered_orders ?? row.delivered ?? 0),
+      total: Number(row.total_orders ?? row.total ?? 0),
+      percentage: Number.isFinite(pct) ? Number(pct.toFixed(1)) : 0,
+      color: "hsl(152, 69%, 45%)",
     };
-    return colors[partner] || "hsl(0, 72%, 51%)";
-  };
+  });
 
-  // Filter delivery data based on view
-  const currentDeliveryData = deliveryView === "partners" && deliveryData.some(d => ["TCS", "PostEx", "Leopards", "M&P"].includes(d.name))
-    ? deliveryData.filter(d => ["TCS", "PostEx", "Leopards", "M&P"].includes(d.name))
-    : deliveryView === "cities" && deliveryData.some(d => ["Karachi", "Lahore", "Islamabad", "Faisalabad", "Rawalpindi"].includes(d.name))
-    ? deliveryData.filter(d => ["Karachi", "Lahore", "Islamabad", "Faisalabad", "Rawalpindi"].includes(d.name))
-    : deliveryData;
+  const avgDelivery = deliveryData.length
+    ? (deliveryData.reduce((sum: number, d: any) => sum + (d.percentage || 0), 0) / deliveryData.length).toFixed(1)
+    : "0";
 
-  const formatCurrency = (value: number) => {
-    return `Rs ${value.toLocaleString('en-PK')}`;
-  };
-
-  // Filter and sort products by selected period and delivery percentage
   const filteredProducts = sheetData 
     ? filterProductsByPeriod(sheetData.topProducts, productPeriod)
-        .sort((a, b) => b.DeliveryPercentage - a.DeliveryPercentage)
+        .sort((a, b) => b.DeliveryPercentile - a.DeliveryPercentile)
         .slice(0, 5)
     : [];
 
-  // Filter orders based on selected filter
   const filteredOrders = orderFilter === "all" 
     ? allOrders 
     : allOrders.filter(order => order.status === orderFilter);
@@ -400,11 +370,11 @@ const Index = () => {
                   <Wallet className="w-4 h-4 sm:w-5 sm:h-5 opacity-80" />
                 </div>
                 <p className="text-xl sm:text-2xl md:text-3xl font-extrabold mt-1.5 sm:mt-2">
-                  {loadingData ? "Loading..." : sheetData ? formatCurrency(sheetData.basics.total_revenue) : "Rs 0"}
+                  {loadingData ? "Loading..." : sheetData ? `Rs ${sheetData.basics.total_revenue.toLocaleString()}` : "Rs 0"}
                 </p>
                 <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
-                  <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                  <span className="text-xs sm:text-sm font-semibold">+18.2%</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 text-success" />
+                  <span className="text-xs font-semibold text-success">+18.2%</span>
                 </div>
               </div>
             </div>
@@ -420,7 +390,7 @@ const Index = () => {
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-success/10"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-success" /></div>
               </div>
               <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingData ? "Loading..." : sheetData ? formatCurrency(sheetData.basics.total_profit) : "Rs 0"}
+                {loadingData ? "Loading..." : sheetData ? `Rs ${sheetData.basics.total_profit.toLocaleString()}` : "Rs 0"}
               </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
@@ -488,7 +458,7 @@ const Index = () => {
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={380}>
-                <AreaChart data={salesData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <AreaChart data={revenueChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.25} />
@@ -581,10 +551,7 @@ const Index = () => {
             <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
-                    <Truck className="w-4 h-4 text-primary" />
-                    Delivery Performance
-                  </h3>
+                  <h3 className="font-bold text-foreground">Delivery Performance</h3>
                   <p className="text-[10px] text-muted-foreground mt-0.5">Success rate by {deliveryView}</p>
                 </div>
                 <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
@@ -613,12 +580,12 @@ const Index = () => {
                 <span className="text-xs text-success font-semibold">Avg. Success</span>
               </div>
               <ResponsiveContainer width="100%" height={140}>
-                <BarChart data={currentDeliveryData} layout="vertical" barCategoryGap="15%">
+                <BarChart data={deliveryData} layout="vertical" barCategoryGap="15%">
                   <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v}%`} />
                   <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} width={80} interval={0} />
                   <Tooltip content={<DeliveryTooltip />} cursor={false} />
                   <Bar dataKey="percentage" radius={[0, 6, 6, 0]}>
-                    {currentDeliveryData.map((entry, i) => (
+                    {deliveryData.map((entry: any, i: number) => (
                       <Cell key={i} fill={entry.color} />
                     ))}
                   </Bar>
@@ -691,10 +658,10 @@ const Index = () => {
                       </div>
                       <div className={cn(
                         "px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1",
-                        (product.DeliveryPercentage ?? 0) >= 90 ? "bg-success/10 text-success" : (product.DeliveryPercentage ?? 0) >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                        product.DeliveryPercentile >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentile >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                       )}>
                         <Truck className="w-3 h-3" />
-                        {(product.DeliveryPercentage ?? 0).toFixed(1)}%
+                        {product.DeliveryPercentile.toFixed(1)}%
                       </div>
                     </div>
                   </div>
@@ -741,10 +708,10 @@ const Index = () => {
                         <td className="py-3 px-4 text-right">
                           <div className={cn(
                             "inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-semibold",
-                            (product.DeliveryPercentage ?? 0) >= 90 ? "bg-success/10 text-success" : (product.DeliveryPercentage ?? 0) >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                            product.DeliveryPercentile >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentile >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                           )}>
                             <Truck className="w-3 h-3" />
-                            {(product.DeliveryPercentage ?? 0).toFixed(1)}%
+                            {product.DeliveryPercentile.toFixed(1)}%
                           </div>
                         </td>
                       </tr>
@@ -846,6 +813,7 @@ const Index = () => {
           </div>
         </div>
 
+        {/* ROW 6: RECENT ORDERS - With Coming Soon Overlay */}
         <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden relative">
           {/* Blurred Background Content */}
           <div className="blur-sm pointer-events-none select-none">
@@ -919,6 +887,7 @@ const Index = () => {
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );
