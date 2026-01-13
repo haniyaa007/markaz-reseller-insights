@@ -741,7 +741,7 @@ const Index = () => {
               </div>
               <h3 className="text-2xl font-bold text-foreground mb-2">Coming Soon</h3>
               <p className="text-sm text-muted-foreground max-w-md">
-                Recent orders tracking is currently under development. Check back soon for real-time order updates!
+                Recent orders tracking abhi development mein hai. Jald real-time order updates ke liye wapas aayein!
               </p>
             </div>
           </div>
