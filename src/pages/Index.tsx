@@ -607,10 +607,10 @@ const Index = () => {
                       </div>
                       <div className={cn(
                         "px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1",
-                        product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                        (product.DeliveryPercentage ?? 0) >= 90 ? "bg-success/10 text-success" : (product.DeliveryPercentage ?? 0) >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                       )}>
                         <Truck className="w-3 h-3" />
-                        {product.DeliveryPercentage.toFixed(1)}%
+                        {(product.DeliveryPercentage ?? 0).toFixed(1)}%
                       </div>
                     </div>
                   </div>
@@ -668,10 +668,10 @@ const Index = () => {
                         <td className="py-3 px-4 text-right">
                           <div className={cn(
                             "inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-semibold",
-                            product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                            (product.DeliveryPercentage ?? 0) >= 90 ? "bg-success/10 text-success" : (product.DeliveryPercentage ?? 0) >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                           )}>
                             <Truck className="w-3 h-3" />
-                            {product.DeliveryPercentage.toFixed(1)}%
+                            {(product.DeliveryPercentage ?? 0).toFixed(1)}%
                           </div>
                         </td>
                       </tr>
