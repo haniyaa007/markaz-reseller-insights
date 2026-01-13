@@ -23,9 +23,17 @@ export interface TopProduct {
   DeliveryPercentage: number;
 }
 
+export interface DeliveryPerformanceData {
+  Partner: string;
+  Delivered: number;
+  Total: number;
+  Percentage: number;
+}
+
 export interface SheetData {
   basics: BasicsData;
   topProducts: TopProduct[];
+  deliveryPerformance: DeliveryPerformanceData[];
 }
 
 export async function fetchSheetData(): Promise<SheetData> {
@@ -36,7 +44,8 @@ export async function fetchSheetData(): Promise<SheetData> {
     if (result.success) {
       return {
         basics: result.data,
-        topProducts: result.topProducts || []
+        topProducts: result.topProducts || [],
+        deliveryPerformance: result.deliveryPerformance || []
       };
     }
     
@@ -51,7 +60,8 @@ export async function fetchSheetData(): Promise<SheetData> {
         pending_inprogress_orders: 0,
         customers: 0
       },
-      topProducts: []
+      topProducts: [],
+      deliveryPerformance: []
     };
   }
 }
@@ -70,4 +80,10 @@ export function filterProductsByPeriod(products: TopProduct[], period: string): 
 // Helper function to get unique periods
 export function getUniquePeriods(products: TopProduct[]): string[] {
   return [...new Set(products.map(product => product.Period))];
+}
+
+// Helper function to fetch delivery performance data
+export async function fetchDeliveryPerformanceData(): Promise<DeliveryPerformanceData[]> {
+  const data = await fetchSheetData();
+  return data.deliveryPerformance;
 }
