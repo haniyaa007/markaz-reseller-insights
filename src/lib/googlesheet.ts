@@ -4,45 +4,53 @@ const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbxQvMRJB4sXof1
 
 // Basics sheet data interface
 export interface BasicsData {
-  total_revenue: number;
-  total_profit: number;
-  total_orders: number;
-  pending_inprogress_orders: number;
-  customers: number;
+  time_period: string;
+  avg_revenue: number;
+  avg_profit: number;
+  avg_orders: number;
+  pending_orders?: number;
+  avg_customers: number;
 }
 
 // Order vs Revenue Chart data interface
 export interface OrderRevenueData {
-  period: string;
-  revenue: number;
-  orders: number;
-  profit: number;
+  month: number;
+  month_name: string;
+  total_orders: number;
+  total_revenue: number;
 }
 
 // Delivery Performance by Courier interface
 export interface DeliveryPerformanceCourier {
-  partner_name: string;
-  delivered_orders: number;
+  partner: string;
   total_orders: number;
+  successful_deliveries: number;
   success_rate: number;
+  avg_success: number;
 }
 
 // Delivery Performance by City interface
 export interface DeliveryPerformanceCity {
-  city_name: string;
-  delivered_orders: number;
+  city: string;
   total_orders: number;
+  successful_deliveries: number;
   success_rate: number;
+  avg_success: number;
 }
 
 // Profit Band data interface
 export interface ProfitBand {
-  band_name: string;
-  min_profit: number;
-  max_profit: number;
-  product_count: number;
-  total_profit: number;
-  percentage: number;
+  profit_band: string;
+  reseller_pay_7d: number;
+  money_earned_7d: number;
+  potential_earnings_7d: number;
+  delivered_7d: number;
+  returned_lost_7d: number;
+  reseller_pay_30d: number;
+  money_earned_30d: number;
+  potential_earnings_30d: number;
+  delivered_30d: number;
+  returned_lost_30d: number;
 }
 
 // Top Products data interface
@@ -54,12 +62,14 @@ export interface TopProduct {
   Product: string;
   TotalOrders: number;
   DeliveredOrders: number;
-  DeliveryPercentile: number;
+  DeliveryPercentage: number; // Fixed: was DeliveryPercentile
+  ProductStatus?: string;
+  Supplier?: string;
 }
 
 // Main sheet data interface
 export interface SheetData {
-  basics: BasicsData;
+  basics: BasicsData[];
   orderRevenueChart: OrderRevenueData[];
   deliveryPerformanceCourier: DeliveryPerformanceCourier[];
   deliveryPerformanceCity: DeliveryPerformanceCity[];
@@ -68,22 +78,29 @@ export interface SheetData {
 }
 
 // Map period names from UI to Google Sheets format
-const periodMapping: Record<string, string> = {
-  "7_DAYS": "Last 7 Days",
-  "30_DAYS": "Last 30 Days",
-  "3_MONTHS": "Last 3 Months",
-  "6_MONTHS": "Last 6 Months",
-  "1_YEAR": "Last 1 Year",
-  "ALL_TIME": "All Time"
+export const periodMapping: Record<string, string> = {
+  "7days": "Last 7 Days",
+  "30days": "Last 30 Days",
+  "3months": "Last 3 Months",
+  "6months": "Last 6 Months",
+  "1year": "Last 1 Year",
+  "lifetime": "All Time"
 };
 
-// Fetch data from specific sheet with optional period parameter
-async function fetchFromSheet(sheetName: string, period?: string): Promise<any> {
+// Map for top products period format
+export const productPeriodMapping: Record<string, string> = {
+  "7_DAYS": "7_DAYS",
+  "30_DAYS": "30_DAYS",
+  "3_MONTHS": "3_MONTHS",
+  "6_MONTHS": "6_MONTHS",
+  "1_YEAR": "1_YEAR",
+  "ALL_TIME": "ALL_TIME"
+};
+
+// Fetch data from specific sheet
+async function fetchFromSheet(sheetName: string): Promise<any> {
   try {
-    let url = `${GOOGLE_SHEET_URL}?sheet=${sheetName}`;
-    if (period) {
-      url += `&period=${period}`;
-    }
+    const url = `${GOOGLE_SHEET_URL}?sheet=${sheetName}`;
     
     console.log(`Fetching from: ${url}`);
     const response = await fetch(url);
@@ -102,53 +119,33 @@ async function fetchFromSheet(sheetName: string, period?: string): Promise<any> 
   }
 }
 
-// Helper function to find data for specific period
-function findPeriodData(dataArray: any[], period: string): any {
-  if (!Array.isArray(dataArray) || dataArray.length === 0) {
-    return null;
-  }
-  
-  // Map the period to the format used in Google Sheets
-  const mappedPeriod = periodMapping[period] || period;
-  
-  // Find the matching period in the array
-  const periodData = dataArray.find(item => 
-    item.time_period === mappedPeriod || 
-    item.Period === period ||
-    item.period === period
-  );
-  
-  console.log(`Looking for period: ${mappedPeriod}, found:`, periodData);
-  
-  return periodData || dataArray[0]; // Fallback to first item if period not found
-}
-
-// Convert API basics data to expected format
-function convertBasicsData(apiData: any): BasicsData {
-  if (!apiData) {
+// Convert basics data from sheet
+function convertBasicsData(apiData: any[]): BasicsData[] {
+  if (!Array.isArray(apiData) || apiData.length === 0) {
     return getDefaultBasicsData();
   }
   
-  return {
-    total_revenue: Number(apiData.avg_revenue || apiData.total_revenue || 0),
-    total_profit: Number(apiData.avg_profit || apiData.total_profit || 0),
-    total_orders: Number(apiData.avg_orders || apiData.total_orders || 0),
-    pending_inprogress_orders: Number(apiData.pending_orders || apiData.pending_inprogress_orders || 0),
-    customers: Number(apiData.avg_customers || apiData.customers || 0)
-  };
+  return apiData.map(item => ({
+    time_period: item.time_period || '',
+    avg_revenue: Number(item.avg_revenue || 0),
+    avg_profit: Number(item.avg_profit || 0),
+    avg_orders: Number(item.avg_orders || 0),
+    pending_orders: Number(item.pending_orders || 0),
+    avg_customers: Number(item.avg_customers || 0)
+  }));
 }
 
-// Convert API order revenue data to expected format
+// Convert order revenue chart data
 function convertOrderRevenueData(apiData: any[]): OrderRevenueData[] {
   if (!Array.isArray(apiData) || apiData.length === 0) {
     return [];
   }
   
   return apiData.map(item => ({
-    period: item.period || item.time_period || item.month || item.month_name || '',
-    revenue: Number(item.revenue || item.total_revenue || item.avg_revenue || 0),
-    orders: Number(item.orders || item.total_orders || item.avg_orders || 0),
-    profit: Number(item.profit || item.total_profit || item.avg_profit || 0)
+    month: Number(item.month || 0),
+    month_name: item.month_name || '',
+    total_orders: Number(item.total_orders || 0),
+    total_revenue: Number(item.total_revenue || 0)
   }));
 }
 
@@ -159,10 +156,11 @@ function convertDeliveryPerformanceCourier(apiData: any[]): DeliveryPerformanceC
   }
   
   return apiData.map(item => ({
-    partner_name: item.partner_name || item.partner || item.name || '',
-    delivered_orders: Number(item.delivered_orders || item.successful_deliveries || 0),
-    total_orders: Number(item.total_orders || item.total || 0),
-    success_rate: Number(item.success_rate || item.percentage || 0)
+    partner: item.partner || '',
+    total_orders: Number(item.total_orders || 0),
+    successful_deliveries: Number(item.successful_deliveries || 0),
+    success_rate: Number(item.success_rate || 0),
+    avg_success: Number(item.avg_success || 0)
   }));
 }
 
@@ -173,10 +171,11 @@ function convertDeliveryPerformanceCity(apiData: any[]): DeliveryPerformanceCity
   }
   
   return apiData.map(item => ({
-    city_name: item.city_name || item.city || item.name || '',
-    delivered_orders: Number(item.delivered_orders || item.successful_deliveries || 0),
-    total_orders: Number(item.total_orders || item.total || 0),
-    success_rate: Number(item.success_rate || item.percentage || 0)
+    city: item.city || '',
+    total_orders: Number(item.total_orders || 0),
+    successful_deliveries: Number(item.successful_deliveries || 0),
+    success_rate: Number(item.success_rate || 0),
+    avg_success: Number(item.avg_success || 0)
   }));
 }
 
@@ -187,12 +186,17 @@ function convertProfitBand(apiData: any[]): ProfitBand[] {
   }
   
   return apiData.map(item => ({
-    band_name: item.band_name || item.name || '',
-    min_profit: Number(item.min_profit || 0),
-    max_profit: Number(item.max_profit || 0),
-    product_count: Number(item.product_count || item.count || 0),
-    total_profit: Number(item.total_profit || item.profit || 0),
-    percentage: Number(item.percentage || 0)
+    profit_band: item['Profit Band'] || item.profit_band || '',
+    reseller_pay_7d: Number(item['What Resellers Pay (7D)'] || item.reseller_pay_7d || 0),
+    money_earned_7d: Number(item['Money Earned (7D)'] || item.money_earned_7d || 0),
+    potential_earnings_7d: Number(item['Potential Earnings (7D)'] || item.potential_earnings_7d || 0),
+    delivered_7d: Number(item['Delivered (7D)'] || item.delivered_7d || 0),
+    returned_lost_7d: Number(item['Returned & Lost (7D)'] || item.returned_lost_7d || 0),
+    reseller_pay_30d: Number(item['What Resellers Pay (30D)'] || item.reseller_pay_30d || 0),
+    money_earned_30d: Number(item['Money Earned (30D)'] || item.money_earned_30d || 0),
+    potential_earnings_30d: Number(item['Potential Earnings (30D)'] || item.potential_earnings_30d || 0),
+    delivered_30d: Number(item['Delivered (30D)'] || item.delivered_30d || 0),
+    returned_lost_30d: Number(item['Returned & Lost (30D)'] || item.returned_lost_30d || 0)
   }));
 }
 
@@ -203,14 +207,16 @@ function convertTopProducts(apiData: any[]): TopProduct[] {
   }
   
   return apiData.map(item => ({
-    Period: item.Period || item.period || item.time_period || '',
-    Category: item.Category || item.category || '',
-    Subcategory: item.Subcategory || item.subcategory || item.sub_category || '',
-    ProductCode: item.ProductCode || item.product_code || item.code || '',
-    Product: item.Product || item.product || item.name || '',
-    TotalOrders: Number(item.TotalOrders || item.total_orders || 0),
-    DeliveredOrders: Number(item.DeliveredOrders || item.delivered_orders || 0),
-    DeliveryPercentile: Number(item.DeliveryPercentile || item.delivery_percentile || item.delivery_percentage || 0)
+    Period: item.Period || '',
+    Category: item.Category || '',
+    Subcategory: item.Subcategory || '',
+    ProductCode: item.ProductCode || '',
+    Product: item.Product || '',
+    TotalOrders: Number(item.TotalOrders || 0),
+    DeliveredOrders: Number(item.DeliveredOrders || 0),
+    DeliveryPercentage: Number(item.DeliveryPercentile || 0), // Note: sheet uses DeliveryPercentile
+    ProductStatus: 'Active', // Default status
+    Supplier: item.Supplier || 'Unknown'
   }));
 }
 
@@ -235,9 +241,8 @@ export async function fetchSheetData(): Promise<SheetData> {
       topProducts: topProductsRaw
     });
 
-    // Convert and return data
     return {
-      basics: convertBasicsData(Array.isArray(basicsRaw) ? basicsRaw[0] : basicsRaw),
+      basics: convertBasicsData(basicsRaw),
       orderRevenueChart: convertOrderRevenueData(orderRevenueRaw),
       deliveryPerformanceCourier: convertDeliveryPerformanceCourier(deliveryCourierRaw),
       deliveryPerformanceCity: convertDeliveryPerformanceCity(deliveryCityRaw),
@@ -250,73 +255,37 @@ export async function fetchSheetData(): Promise<SheetData> {
   }
 }
 
-// Fetch data for specific time period
-export async function fetchSheetDataByPeriod(period: string): Promise<SheetData> {
-  try {
-    console.log(`Fetching data for period: ${period}`);
-    
-    const [basicsRaw, orderRevenueRaw, deliveryCourierRaw, deliveryCityRaw, profitBandRaw, topProductsRaw] = await Promise.all([
-      fetchFromSheet('basics'),
-      fetchFromSheet('ordervsrevenuechart'),
-      fetchFromSheet('deliveryperformancecourier'),
-      fetchFromSheet('deliveryperformancecity'),
-      fetchFromSheet('profitband'),
-      fetchFromSheet('topproducts')
-    ]);
-
-    console.log('Raw data for period:', {
-      basics: basicsRaw,
-      orderRevenue: orderRevenueRaw
-    });
-
-    // Find the data for the specific period
-    const periodBasics = findPeriodData(basicsRaw, period);
-    
-    // Filter order revenue chart for the period
-    const filteredOrderRevenue = Array.isArray(orderRevenueRaw) 
-      ? orderRevenueRaw.filter(item => 
-          item.period === period || 
-          item.time_period === periodMapping[period]
-        )
-      : [];
-    
-    // Filter top products for the period
-    const filteredProducts = Array.isArray(topProductsRaw)
-      ? topProductsRaw.filter(item => 
-          item.Period === period || 
-          item.period === period
-        )
-      : [];
-
-    console.log('Filtered data:', {
-      periodBasics,
-      filteredOrderRevenue,
-      filteredProducts: filteredProducts.length
-    });
-
+// Helper function to find data for specific period
+export function findPeriodData(basicsArray: BasicsData[], period: string): BasicsData {
+  if (!Array.isArray(basicsArray) || basicsArray.length === 0) {
     return {
-      basics: convertBasicsData(periodBasics),
-      orderRevenueChart: convertOrderRevenueData(filteredOrderRevenue),
-      deliveryPerformanceCourier: convertDeliveryPerformanceCourier(deliveryCourierRaw),
-      deliveryPerformanceCity: convertDeliveryPerformanceCity(deliveryCityRaw),
-      profitBand: convertProfitBand(profitBandRaw),
-      topProducts: convertTopProducts(filteredProducts)
+      time_period: period,
+      avg_revenue: 0,
+      avg_profit: 0,
+      avg_orders: 0,
+      pending_orders: 0,
+      avg_customers: 0
     };
-  } catch (error) {
-    console.error('Error fetching filtered sheet data:', error);
-    return getDefaultSheetData();
   }
+  
+  const mappedPeriod = periodMapping[period] || period;
+  const periodData = basicsArray.find(item => item.time_period === mappedPeriod);
+  
+  return periodData || basicsArray[0];
 }
 
 // Default data functions
-function getDefaultBasicsData(): BasicsData {
-  return {
-    total_revenue: 0,
-    total_profit: 0,
-    total_orders: 0,
-    pending_inprogress_orders: 0,
-    customers: 0
-  };
+function getDefaultBasicsData(): BasicsData[] {
+  return [
+    {
+      time_period: 'Last 7 Days',
+      avg_revenue: 0,
+      avg_profit: 0,
+      avg_orders: 0,
+      pending_orders: 0,
+      avg_customers: 0
+    }
+  ];
 }
 
 function getDefaultSheetData(): SheetData {
@@ -335,14 +304,6 @@ export function filterProductsByPeriod(products: TopProduct[], period: string): 
   return products.filter(product => product.Period === period);
 }
 
-export function filterOrderRevenueByPeriod(data: OrderRevenueData[], period: string): OrderRevenueData[] {
-  return data.filter(item => item.period === period);
-}
-
 export function getUniquePeriods(products: TopProduct[]): string[] {
   return [...new Set(products.map(product => product.Period))];
-}
-
-export function getUniqueOrderRevenuePeriods(data: OrderRevenueData[]): string[] {
-  return [...new Set(data.map(item => item.period))];
 }

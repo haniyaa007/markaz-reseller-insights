@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
   Wallet, TrendingUp, Clock, ShoppingBag, Users,
-  Download, ArrowUpRight, ArrowDownRight, Star,
+  Download, ArrowUpRight, ArrowDownRight,
   CheckCircle2, Truck, XCircle, Package, ChevronDown, Check, RefreshCw, AlertCircle, Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -14,7 +14,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { fetchSheetData, type SheetData, type TopProduct, filterProductsByPeriod } from "@/lib/googlesheet";
+import { 
+  fetchSheetData, 
+  type SheetData, 
+  type BasicsData,
+  type TopProduct, 
+  filterProductsByPeriod,
+  findPeriodData,
+  periodMapping
+} from "@/lib/googlesheet";
 
 // Metric Definitions
 const metricDefinitions: Record<string, { title: string; description: string }> = {
@@ -26,25 +34,17 @@ const metricDefinitions: Record<string, { title: string; description: string }> 
     title: "Profit Earned",
     description: "Your net earnings after deducting product costs and platform fees from total revenue."
   },
-  commission: {
-    title: "Commission",
-    description: "The fee earned by the platform from your sales. This is typically a percentage of each transaction."
+  orders: {
+    title: "Total Orders",
+    description: "The complete count of all orders placed within the selected time period, regardless of status."
   },
   pending: {
     title: "Pending Orders",
     description: "Orders that have been placed but not yet shipped or processed. Lower numbers indicate efficient order fulfillment."
   },
-  orders: {
-    title: "Total Orders",
-    description: "The complete count of all orders placed within the selected time period, regardless of status."
-  },
   customers: {
     title: "Customers",
     description: "Unique buyers who have made at least one purchase. Higher numbers indicate growing market reach."
-  },
-  conversion: {
-    title: "Conversion Rate",
-    description: "Percentage of impressions (product views) that resulted in actual purchases. Calculated as (Orders ÷ Impressions) × 100."
   }
 };
 
@@ -58,16 +58,6 @@ const dateRanges = [
   { id: "lifetime", label: "All Time" },
 ];
 
-// Order Filters - ALL RESTORED
-const orderFilters = [
-  { id: "all", label: "All", count: 1247 },
-  { id: "in-progress", label: "In-progress", count: 186 },
-  { id: "shippers-advice", label: "Shipper's Advice", count: 74 },
-  { id: "delivered", label: "Delivered", count: 892 },
-  { id: "returned", label: "Returned", count: 52 },
-  { id: "cancelled", label: "Cancelled", count: 43 },
-];
-
 // Product Period Options (mapped from sheet Period values)
 const productPeriodOptions = [
   { id: "7_DAYS", label: "7 Days" },
@@ -77,68 +67,6 @@ const productPeriodOptions = [
   { id: "1_YEAR", label: "1 Year" },
   { id: "ALL_TIME", label: "All Time" },
 ];
-
-// Sales Chart Data
-const salesData = [
-  { name: "Jan", sales: 145000, orders: 89 },
-  { name: "Feb", sales: 198000, orders: 124 },
-  { name: "Mar", sales: 167000, orders: 98 },
-  { name: "Apr", sales: 234000, orders: 156 },
-  { name: "May", sales: 189000, orders: 132 },
-  { name: "Jun", sales: 267000, orders: 178 },
-  { name: "Jul", sales: 298000, orders: 195 },
-  { name: "Aug", sales: 245000, orders: 167 },
-  { name: "Sep", sales: 312000, orders: 208 },
-  { name: "Oct", sales: 356000, orders: 234 },
-  { name: "Nov", sales: 389000, orders: 258 },
-  { name: "Dec", sales: 423000, orders: 289 },
-];
-
-// Order Status Data
-const orderStatusData = [
-  { name: "Delivered", value: 892, color: "hsl(152, 69%, 45%)", description: "Successfully completed orders" },
-  { name: "In Transit", value: 186, color: "hsl(210, 90%, 55%)", description: "Orders currently being shipped" },
-  { name: "Pending", value: 74, color: "hsl(38, 92%, 50%)", description: "Orders awaiting processing" },
-  { name: "Cancelled", value: 43, color: "hsl(0, 72%, 51%)", description: "Orders that were cancelled" },
-];
-
-// Delivery Performance Data - By Partners
-const deliveryByPartner = [
-  { name: "TCS", delivered: 412, total: 445, percentage: 92.6, color: "hsl(152, 69%, 45%)" },
-  { name: "PostEx", delivered: 287, total: 325, percentage: 88.3, color: "hsl(210, 90%, 55%)" },
-  { name: "Leopards", delivered: 198, total: 230, percentage: 86.1, color: "hsl(38, 92%, 50%)" },
-  { name: "M&P", delivered: 156, total: 195, percentage: 80.0, color: "hsl(280, 65%, 55%)" },
-];
-
-// Delivery Performance Data - By Cities
-const deliveryByCities = [
-  { name: "Karachi", delivered: 389, total: 420, percentage: 92.6, color: "hsl(152, 69%, 45%)" },
-  { name: "Lahore", delivered: 312, total: 350, percentage: 89.1, color: "hsl(210, 90%, 55%)" },
-  { name: "Islamabad", delivered: 198, total: 225, percentage: 88.0, color: "hsl(38, 92%, 50%)" },
-  { name: "Faisalabad", delivered: 154, total: 200, percentage: 77.0, color: "hsl(280, 65%, 55%)" },
-];
-
-// Recent Orders - ALL STATUSES
-const allOrders = [
-  { id: "ORD-7829", customer: "Ahmed K.", amount: 880, profit: 88, status: "delivered", date: "Dec 20" },
-  { id: "ORD-7828", customer: "Fatima A.", amount: 1455, profit: 145, status: "in-progress", date: "Dec 19" },
-  { id: "ORD-7827", customer: "Usman S.", amount: 3758, profit: 376, status: "shippers-advice", date: "Dec 18" },
-  { id: "ORD-7826", customer: "Zainab H.", amount: 2152, profit: 215, status: "delivered", date: "Dec 17" },
-  { id: "ORD-7825", customer: "Bilal A.", amount: 927, profit: 93, status: "cancelled", date: "Dec 16" },
-  { id: "ORD-7824", customer: "Ayesha M.", amount: 1280, profit: 128, status: "returned", date: "Dec 15" },
-  { id: "ORD-7823", customer: "Hassan R.", amount: 650, profit: 65, status: "delivered", date: "Dec 14" },
-  { id: "ORD-7822", customer: "Sana T.", amount: 2890, profit: 289, status: "in-progress", date: "Dec 13" },
-  { id: "ORD-7821", customer: "Omar K.", amount: 1750, profit: 175, status: "shippers-advice", date: "Dec 12" },
-  { id: "ORD-7820", customer: "Nadia S.", amount: 3200, profit: 320, status: "delivered", date: "Dec 11" },
-];
-
-const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
-  delivered: { icon: CheckCircle2, color: "text-success", label: "Delivered" },
-  "in-progress": { icon: Clock, color: "text-warning", label: "In Progress" },
-  "shippers-advice": { icon: Package, color: "text-info", label: "Shipping" },
-  cancelled: { icon: XCircle, color: "text-destructive", label: "Cancelled" },
-  returned: { icon: AlertCircle, color: "text-muted-foreground", label: "Returned" },
-};
 
 // Metric Info Popover Component
 const MetricInfoPopover = ({ metricKey, children }: { metricKey: string; children: React.ReactNode }) => {
@@ -207,7 +135,6 @@ const DeliveryTooltip = ({ active, payload }: any) => {
 
 const Index = () => {
   const [dateRange, setDateRange] = useState("30days");
-  const [orderFilter, setOrderFilter] = useState("all");
   const [productPeriod, setProductPeriod] = useState("7_DAYS");
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [deliveryView, setDeliveryView] = useState<"partners" | "cities">("partners");
@@ -217,8 +144,6 @@ const Index = () => {
   const [loadingData, setLoadingData] = useState(true);
 
   const selectedDateLabel = dateRanges.find(r => r.id === dateRange)?.label;
-  const deliveryData = deliveryView === "partners" ? deliveryByPartner : deliveryByCities;
-  const avgDelivery = (deliveryData.reduce((sum, d) => sum + d.percentage, 0) / deliveryData.length).toFixed(1);
 
   // Fetch data from Google Sheets
   useEffect(() => {
@@ -231,8 +156,11 @@ const Index = () => {
     loadData();
   }, []);
 
+  // Get current period data
+  const currentPeriodData = sheetData ? findPeriodData(sheetData.basics, dateRange) : null;
+
   const formatCurrency = (value: number) => {
-    return `Rs ${value.toLocaleString('en-PK')}`;
+    return `Rs ${value.toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
   };
 
   // Filter and sort products by selected period and delivery percentage
@@ -242,10 +170,37 @@ const Index = () => {
         .slice(0, 5)
     : [];
 
-  // Filter orders based on selected filter
-  const filteredOrders = orderFilter === "all" 
-    ? allOrders 
-    : allOrders.filter(order => order.status === orderFilter);
+  // Prepare delivery data for charts
+  const deliveryDataPartners = sheetData?.deliveryPerformanceCourier.map((item, idx) => ({
+    name: item.partner,
+    delivered: item.successful_deliveries,
+    total: item.total_orders,
+    percentage: (item.success_rate * 100),
+    color: ["hsl(152, 69%, 45%)", "hsl(210, 90%, 55%)", "hsl(38, 92%, 50%)", "hsl(280, 65%, 55%)"][idx % 4]
+  })) || [];
+
+  const deliveryDataCities = sheetData?.deliveryPerformanceCity.map((item, idx) => ({
+    name: item.city,
+    delivered: item.successful_deliveries,
+    total: item.total_orders,
+    percentage: (item.success_rate * 100),
+    color: ["hsl(152, 69%, 45%)", "hsl(210, 90%, 55%)", "hsl(38, 92%, 50%)", "hsl(280, 65%, 55%)"][idx % 4]
+  })) || [];
+
+  const deliveryData = deliveryView === "partners" ? deliveryDataPartners : deliveryDataCities;
+  const avgDelivery = deliveryData.length > 0 
+    ? (deliveryData.reduce((sum, d) => sum + d.percentage, 0) / deliveryData.length).toFixed(1)
+    : "0.0";
+
+  // Prepare order status data (mock for now, can be calculated from sheet data if available)
+  const orderStatusData = [
+    { name: "Delivered", value: currentPeriodData ? Math.round(currentPeriodData.avg_orders * 0.71) : 0, color: "hsl(152, 69%, 45%)" },
+    { name: "In Transit", value: currentPeriodData ? Math.round(currentPeriodData.avg_orders * 0.15) : 0, color: "hsl(210, 90%, 55%)" },
+    { name: "Pending", value: currentPeriodData?.pending_orders || 0, color: "hsl(38, 92%, 50%)" },
+    { name: "Cancelled", value: currentPeriodData ? Math.round(currentPeriodData.avg_orders * 0.03) : 0, color: "hsl(0, 72%, 51%)" },
+  ];
+
+  const totalOrdersForPie = orderStatusData.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
@@ -289,7 +244,10 @@ const Index = () => {
               )}
             </div>
             
-            <button className="p-2 sm:p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-all">
+            <button 
+              className="p-2 sm:p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-all"
+              onClick={() => window.location.reload()}
+            >
               <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             </button>
             
@@ -316,7 +274,7 @@ const Index = () => {
                   <Wallet className="w-4 h-4 sm:w-5 sm:h-5 opacity-80" />
                 </div>
                 <p className="text-xl sm:text-2xl md:text-3xl font-extrabold mt-1.5 sm:mt-2">
-                  {loadingData ? "Loading..." : sheetData ? formatCurrency(sheetData.basics.total_revenue) : "Rs 0"}
+                  {loadingData ? "Loading..." : currentPeriodData ? formatCurrency(currentPeriodData.avg_revenue) : "Rs 0"}
                 </p>
                 <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                   <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -336,7 +294,7 @@ const Index = () => {
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-success/10"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-success" /></div>
               </div>
               <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingData ? "Loading..." : sheetData ? formatCurrency(sheetData.basics.total_profit) : "Rs 0"}
+                {loadingData ? "Loading..." : currentPeriodData ? formatCurrency(currentPeriodData.avg_profit) : "Rs 0"}
               </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
@@ -355,7 +313,7 @@ const Index = () => {
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-info/10"><ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-info" /></div>
               </div>
               <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingData ? "Loading..." : sheetData ? sheetData.basics.total_orders.toLocaleString() : "0"}
+                {loadingData ? "Loading..." : currentPeriodData ? Math.round(currentPeriodData.avg_orders).toLocaleString() : "0"}
               </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
@@ -374,7 +332,7 @@ const Index = () => {
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
               </div>
               <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingData ? "Loading..." : sheetData ? sheetData.basics.pending_inprogress_orders.toLocaleString() : "0"}
+                {loadingData ? "Loading..." : currentPeriodData?.pending_orders?.toLocaleString() || "0"}
               </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
@@ -399,27 +357,36 @@ const Index = () => {
                   <span className="flex items-center gap-1.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-info" /> Orders</span>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={380}>
-                <AreaChart data={salesData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.25} />
-                      <stop offset="100%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 90%)" vertical={false} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} dy={8} />
-                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v/1000}k`} width={35} />
-                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(210, 90%, 55%)" }} width={30} />
-                  <Tooltip content={<SalesTooltip />} />
-                  <Area yAxisId="left" type="monotone" dataKey="sales" stroke="hsl(152, 69%, 45%)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
-                  <Area yAxisId="right" type="monotone" dataKey="orders" stroke="hsl(210, 90%, 55%)" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
-                </AreaChart>
-              </ResponsiveContainer>
+              {loadingData || !sheetData?.orderRevenueChart.length ? (
+                <div className="flex items-center justify-center h-[380px]">
+                  <div className="text-center">
+                    <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Loading chart data...</p>
+                  </div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={380}>
+                  <AreaChart data={sheetData.orderRevenueChart} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.25} />
+                        <stop offset="100%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0.2} />
+                        <stop offset="100%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 90%)" vertical={false} />
+                    <XAxis dataKey="month_name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} dy={8} />
+                    <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${(v/1000000).toFixed(0)}M`} width={35} />
+                    <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(210, 90%, 55%)" }} width={30} />
+                    <Tooltip content={<SalesTooltip />} />
+                    <Area yAxisId="left" type="monotone" dataKey="total_revenue" stroke="hsl(152, 69%, 45%)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
+                    <Area yAxisId="right" type="monotone" dataKey="total_orders" stroke="hsl(210, 90%, 55%)" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
 
@@ -442,7 +409,7 @@ const Index = () => {
                   </div>
                 </div>
                 <p className="text-2xl font-bold mt-2">
-                  {loadingData ? "Loading..." : sheetData ? sheetData.basics.customers.toLocaleString() : "0"}
+                  {loadingData ? "Loading..." : currentPeriodData ? Math.round(currentPeriodData.avg_customers).toLocaleString() : "0"}
                 </p>
               </div>
             </MetricInfoPopover>
@@ -479,7 +446,7 @@ const Index = () => {
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                    <p className="text-xl font-bold">1,195</p>
+                    <p className="text-xl font-bold">{totalOrdersForPie.toLocaleString()}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
@@ -529,23 +496,75 @@ const Index = () => {
                 <p className="text-2xl font-bold text-primary">{avgDelivery}%</p>
                 <span className="text-xs text-success font-semibold">Avg. Success</span>
               </div>
-              <ResponsiveContainer width="100%" height={140}>
-                <BarChart data={deliveryData} layout="vertical" barCategoryGap="15%">
-                  <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v}%`} />
-                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} width={80} interval={0} />
-                  <Tooltip content={<DeliveryTooltip />} cursor={false} />
-                  <Bar dataKey="percentage" radius={[0, 6, 6, 0]}>
-                    {deliveryData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {loadingData || deliveryData.length === 0 ? (
+                <div className="flex items-center justify-center h-[140px]">
+                  <p className="text-sm text-muted-foreground">Loading delivery data...</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={140}>
+                  <BarChart data={deliveryData} layout="vertical" barCategoryGap="15%">
+                    <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v}%`} />
+                    <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} width={80} interval={0} />
+                    <Tooltip content={<DeliveryTooltip />} cursor={false} />
+                    <Bar dataKey="percentage" radius={[0, 6, 6, 0]}>
+                      {deliveryData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
         </div>
 
-        {/* ROW 5: TOP SELLING PRODUCTS */}
+        {/* ROW 5: PROFIT BANDS ANALYSIS */}
+        {sheetData && sheetData.profitBand.length > 0 && (
+          <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
+            <div className="p-4 border-b border-border">
+              <h3 className="font-bold text-foreground">Profit Bands Analysis</h3>
+              <p className="text-xs text-muted-foreground">Performance by profit margin for 30 Days</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    <th className="text-left py-3 px-4">Profit Band</th>
+                    <th className="text-right py-3 px-4">Reseller Pay</th>
+                    <th className="text-right py-3 px-4">Money Earned</th>
+                    <th className="text-right py-3 px-4">Potential Earnings</th>
+                    <th className="text-right py-3 px-4">Delivered</th>
+                    <th className="text-right py-3 px-4">Returned & Lost</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {sheetData.profitBand.map((band, index) => (
+                    <tr key={index} className="hover:bg-muted/30 transition-colors">
+                      <td className="py-3 px-4">
+                        <span className={cn(
+                          "inline-block px-2 py-1 rounded-full text-xs font-semibold",
+                          band.profit_band === "0-40%" && "bg-destructive/10 text-destructive",
+                          band.profit_band === "40-80%" && "bg-warning/10 text-warning",
+                          band.profit_band === "80-100%" && "bg-info/10 text-info",
+                          band.profit_band === "100-150%" && "bg-success/10 text-success"
+                        )}>
+                          {band.profit_band}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right font-semibold">{formatCurrency(band.reseller_pay_30d)}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-success">{formatCurrency(band.money_earned_30d)}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-primary">{formatCurrency(band.potential_earnings_30d)}</td>
+                      <td className="py-3 px-4 text-right font-semibold">{band.delivered_30d}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-destructive">{band.returned_lost_30d}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ROW 6: TOP SELLING PRODUCTS */}
         <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
           <div className="p-4 border-b border-border">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -684,69 +703,10 @@ const Index = () => {
           )}
         </div>
 
-        {/* ROW 6: RECENT ORDERS - With Coming Soon Overlay */}
+        {/* ROW 7: RECENT ORDERS - With Coming Soon Overlay */}
         <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden relative">
-          {/* Blurred Background Content */}
-          <div className="blur-sm pointer-events-none select-none">
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-foreground">Recent Orders</h3>
-                <span className="text-xs text-muted-foreground">{filteredOrders.length} orders</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {orderFilters.map((filter) => (
-                  <button
-                    key={filter.id}
-                    className={cn(
-                      "px-2.5 py-1.5 rounded-full text-[10px] font-semibold transition-all",
-                      orderFilter === filter.id
-                        ? "bg-foreground text-background"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    )}
-                  >
-                    {filter.label} <span className="opacity-70">{filter.count}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="divide-y divide-border/50 max-h-[300px] overflow-y-auto">
-              {filteredOrders.map((order) => {
-                const status = statusConfig[order.status];
-                const StatusIcon = status?.icon || CheckCircle2;
-                return (
-                  <div key={order.id} className="flex items-center gap-3 px-4 py-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                      <span className="text-xs font-bold text-primary">{order.customer[0]}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-sm text-foreground">{order.customer}</p>
-                        <span className={cn("flex items-center gap-0.5 text-[10px] font-medium", status?.color)}>
-                          <StatusIcon className="w-3 h-3" />
-                          {status?.label}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{order.id} · {order.date}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-sm">Rs {order.amount.toLocaleString()}</p>
-                      <span className="text-xs font-semibold text-primary">+Rs {order.profit}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            <div className="p-3 border-t border-border bg-muted/30">
-              <button className="w-full py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                View All Orders →
-              </button>
-            </div>
-          </div>
-
           {/* Coming Soon Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex items-center justify-center bg-background/80 backdrop-blur-sm py-20">
             <div className="text-center p-8">
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                 <Clock className="w-10 h-10 text-primary" />
