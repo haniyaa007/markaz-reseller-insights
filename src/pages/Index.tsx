@@ -103,6 +103,55 @@ const orderStatusData = [
   { name: "Returned", value: 52, color: "hsl(280, 65%, 55%)", description: "Orders that were returned" },
 ];
 
+// Profit Bands Data
+interface ProfitBandData {
+  band: string;
+  resellerPay: number;
+  moneyEarned: number;
+  potentialEarnings: number;
+  delivered: number;
+  returnedLost: number;
+}
+
+const profitBandsData: Record<string, ProfitBandData[]> = {
+  "7days": [
+    { band: "0-40%", resellerPay: 1356.89, moneyEarned: 188.84, potentialEarnings: 219.94, delivered: 62, returnedLost: 14 },
+    { band: "40-80%", resellerPay: 1224.12, moneyEarned: 698.82, potentialEarnings: 759.94, delivered: 32, returnedLost: 5 },
+    { band: "80-100%", resellerPay: 947.56, moneyEarned: 864.52, potentialEarnings: 895.49, delivered: 20, returnedLost: 9 },
+    { band: "100-150%", resellerPay: 819.13, moneyEarned: 1030.22, potentialEarnings: 1093.11, delivered: 27, returnedLost: 5 },
+  ],
+  "30days": [
+    { band: "0-40%", resellerPay: 1342.53, moneyEarned: 173.65, potentialEarnings: 216.22, delivered: 168, returnedLost: 66 },
+    { band: "40-80%", resellerPay: 1181.91, moneyEarned: 675.38, potentialEarnings: 775.76, delivered: 76, returnedLost: 69 },
+    { band: "80-100%", resellerPay: 975.02, moneyEarned: 877.05, potentialEarnings: 906.57, delivered: 27, returnedLost: 47 },
+    { band: "100-150%", resellerPay: 803.48, moneyEarned: 992.70, potentialEarnings: 1092.56, delivered: 56, returnedLost: 57 },
+  ],
+  "3months": [
+    { band: "0-40%", resellerPay: 1332.69, moneyEarned: 162.52, potentialEarnings: 219.83, delivered: 773, returnedLost: 183 },
+    { band: "40-80%", resellerPay: 1135.75, moneyEarned: 647.56, potentialEarnings: 782.20, delivered: 309, returnedLost: 382 },
+    { band: "80-100%", resellerPay: 928.39, moneyEarned: 826.22, potentialEarnings: 905.74, delivered: 102, returnedLost: 77 },
+    { band: "100-150%", resellerPay: 779.86, moneyEarned: 964.43, potentialEarnings: 1089.78, delivered: 220, returnedLost: 82 },
+  ],
+  "6months": [
+    { band: "0-40%", resellerPay: 1305.22, moneyEarned: 155.75, potentialEarnings: 219.27, delivered: 1665, returnedLost: 338 },
+    { band: "40-80%", resellerPay: 1061.47, moneyEarned: 613.54, potentialEarnings: 780.76, delivered: 697, returnedLost: 236 },
+    { band: "80-100%", resellerPay: 881.31, moneyEarned: 782.70, potentialEarnings: 905.91, delivered: 306, returnedLost: 203 },
+    { band: "100-150%", resellerPay: 765.85, moneyEarned: 952.25, potentialEarnings: 1089.06, delivered: 534, returnedLost: 105 },
+  ],
+  "1year": [
+    { band: "0-40%", resellerPay: 1305.97, moneyEarned: 149.09, potentialEarnings: 220.14, delivered: 3515, returnedLost: 451 },
+    { band: "40-80%", resellerPay: 1005.83, moneyEarned: 582.51, potentialEarnings: 777.28, delivered: 1413, returnedLost: 351 },
+    { band: "80-100%", resellerPay: 816.83, moneyEarned: 724.29, potentialEarnings: 900.26, delivered: 629, returnedLost: 15 },
+    { band: "100-150%", resellerPay: 701.77, moneyEarned: 861.21, potentialEarnings: 1081.97, delivered: 935, returnedLost: 68 },
+  ],
+  "lifetime": [
+    { band: "0-40%", resellerPay: 1250.41, moneyEarned: 147.66, potentialEarnings: 217.99, delivered: 22300, returnedLost: 9394 },
+    { band: "40-80%", resellerPay: 897.83, moneyEarned: 507.43, potentialEarnings: 769.61, delivered: 5811, returnedLost: 2946 },
+    { band: "80-100%", resellerPay: 681.87, moneyEarned: 615.69, potentialEarnings: 890.29, delivered: 2509, returnedLost: 7325 },
+    { band: "100-150%", resellerPay: 636.87, moneyEarned: 725.10, potentialEarnings: 1081.17, delivered: 1993, returnedLost: 4521 },
+  ],
+};
+
 // Recent Orders - ALL STATUSES
 const allOrders = [
   { id: "ORD-7829", customer: "Ahmed K.", amount: 880, profit: 88, status: "delivered", date: "Dec 20" },
@@ -707,7 +756,96 @@ const Index = () => {
           )}
         </div>
 
-        {/* ROW 6: RECENT ORDERS - With Coming Soon Overlay */}
+        {/* PROFIT BANDS TABLE */}
+        <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
+          <div className="p-4 border-b border-border">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="font-bold text-foreground flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  Profit Bands Analysis
+                </h3>
+                <p className="text-xs text-muted-foreground">Performance by profit margin for {selectedDateLabel}</p>
+              </div>
+            </div>
+          </div>
+          
+          {/* Mobile Card View */}
+          <div className="block md:hidden space-y-3 p-4">
+            {profitBandsData[dateRange]?.map((band, index) => (
+              <div key={band.band} className="bg-muted/30 rounded-xl p-4 border border-border/50">
+                <div className="flex items-center justify-between mb-3">
+                  <span className={cn(
+                    "px-3 py-1 rounded-full text-xs font-bold",
+                    index === 0 && "bg-destructive/10 text-destructive",
+                    index === 1 && "bg-warning/10 text-warning",
+                    index === 2 && "bg-info/10 text-info",
+                    index === 3 && "bg-success/10 text-success"
+                  )}>
+                    {band.band}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-success font-semibold">{band.delivered} delivered</span>
+                    <span className="text-xs text-destructive">{band.returnedLost} lost</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Reseller Pay</p>
+                    <p className="text-sm font-semibold">Rs {band.resellerPay.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Earned</p>
+                    <p className="text-sm font-semibold text-success">Rs {band.moneyEarned.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground">Potential</p>
+                    <p className="text-sm font-semibold text-primary">Rs {band.potentialEarnings.toLocaleString()}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                  <th className="text-left py-3 px-4">Profit Band</th>
+                  <th className="text-right py-3 px-4">Reseller Pay</th>
+                  <th className="text-right py-3 px-4">Money Earned</th>
+                  <th className="text-right py-3 px-4">Potential Earnings</th>
+                  <th className="text-right py-3 px-4">Delivered</th>
+                  <th className="text-right py-3 px-4">Returned & Lost</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {profitBandsData[dateRange]?.map((band, index) => (
+                  <tr key={band.band} className="hover:bg-muted/30 transition-colors">
+                    <td className="py-3 px-4">
+                      <span className={cn(
+                        "px-3 py-1.5 rounded-full text-xs font-bold",
+                        index === 0 && "bg-destructive/10 text-destructive",
+                        index === 1 && "bg-warning/10 text-warning",
+                        index === 2 && "bg-info/10 text-info",
+                        index === 3 && "bg-success/10 text-success"
+                      )}>
+                        {band.band}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right font-semibold text-sm">Rs {band.resellerPay.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right font-semibold text-sm text-success">Rs {band.moneyEarned.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right font-semibold text-sm text-primary">Rs {band.potentialEarnings.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right font-semibold text-sm text-success">{band.delivered.toLocaleString()}</td>
+                    <td className="py-3 px-4 text-right font-semibold text-sm text-destructive">{band.returnedLost.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
         <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden relative">
           {/* Blurred Background Content */}
           <div className="blur-sm pointer-events-none select-none">
