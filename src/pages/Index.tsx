@@ -14,7 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { fetchSheetData, type SheetData, type TopProduct, filterProductsByPeriod } from "@/lib/googlesheet";
+import { fetchSheetData, type SheetData, type TopProduct, filterProductsByPeriod, fetchDeliveryPerformanceData, type DeliveryPerformanceData } from "@/lib/googlesheet";
 
 // Metric Definitions
 const metricDefinitions: Record<string, { title: string; description: string }> = {
@@ -100,22 +100,7 @@ const orderStatusData = [
   { name: "In Transit", value: 186, color: "hsl(210, 90%, 55%)", description: "Orders currently being shipped" },
   { name: "Pending", value: 74, color: "hsl(38, 92%, 50%)", description: "Orders awaiting processing" },
   { name: "Cancelled", value: 43, color: "hsl(0, 72%, 51%)", description: "Orders that were cancelled" },
-];
-
-// Delivery Performance Data - By Partners
-const deliveryByPartner = [
-  { name: "TCS", delivered: 412, total: 445, percentage: 92.6, color: "hsl(152, 69%, 45%)" },
-  { name: "PostEx", delivered: 287, total: 325, percentage: 88.3, color: "hsl(210, 90%, 55%)" },
-  { name: "Leopards", delivered: 198, total: 230, percentage: 86.1, color: "hsl(38, 92%, 50%)" },
-  { name: "M&P", delivered: 156, total: 195, percentage: 80.0, color: "hsl(280, 65%, 55%)" },
-];
-
-// Delivery Performance Data - By Cities
-const deliveryByCities = [
-  { name: "Karachi", delivered: 389, total: 420, percentage: 92.6, color: "hsl(152, 69%, 45%)" },
-  { name: "Lahore", delivered: 312, total: 350, percentage: 89.1, color: "hsl(210, 90%, 55%)" },
-  { name: "Islamabad", delivered: 198, total: 225, percentage: 88.0, color: "hsl(38, 92%, 50%)" },
-  { name: "Faisalabad", delivered: 154, total: 200, percentage: 77.0, color: "hsl(280, 65%, 55%)" },
+  { name: "Returned", value: 52, color: "hsl(280, 65%, 55%)", description: "Orders that were returned" },
 ];
 
 // Recent Orders - ALL STATUSES
@@ -214,22 +199,72 @@ const Index = () => {
   
   // Google Sheets Integration
   const [sheetData, setSheetData] = useState<SheetData | null>(null);
+  const [deliveryData, setDeliveryData] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   const selectedDateLabel = dateRanges.find(r => r.id === dateRange)?.label;
-  const deliveryData = deliveryView === "partners" ? deliveryByPartner : deliveryByCities;
-  const avgDelivery = (deliveryData.reduce((sum, d) => sum + d.percentage, 0) / deliveryData.length).toFixed(1);
+  const avgDelivery = deliveryData.length > 0 
+    ? (deliveryData.reduce((sum, d) => sum + d.percentage, 0) / deliveryData.length).toFixed(1)
+    : "0.0";
 
   // Fetch data from Google Sheets
   useEffect(() => {
     const loadData = async () => {
       setLoadingData(true);
-      const data = await fetchSheetData();
-      setSheetData(data);
-      setLoadingData(false);
+      try {
+        // Fetch both basics data and delivery performance data
+        const [sheetDataResult, deliveryDataResult] = await Promise.all([
+          fetchSheetData(),
+          fetchDeliveryPerformanceData()
+        ]);
+        
+        setSheetData(sheetDataResult);
+        
+        // Transform delivery data
+        if (deliveryDataResult && deliveryDataResult.length > 0) {
+          const transformedDeliveryData = deliveryDataResult.map((item: DeliveryPerformanceData) => ({
+            name: item.Partner,
+            delivered: item.Delivered,
+            total: item.Total,
+            percentage: item.Percentage,
+            color: getColorForPartner(item.Partner)
+          }));
+          setDeliveryData(transformedDeliveryData);
+        } else {
+          setDeliveryData([]);
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+        setSheetData(null);
+        setDeliveryData([]);
+      } finally {
+        setLoadingData(false);
+      }
     };
     loadData();
   }, []);
+
+  const getColorForPartner = (partner: string): string => {
+    const colors: Record<string, string> = {
+      "TCS": "hsl(152, 69%, 45%)",
+      "PostEx": "hsl(210, 90%, 55%)",
+      "Leopards": "hsl(38, 92%, 50%)",
+      "M&P": "hsl(280, 65%, 55%)",
+      "Karachi": "hsl(152, 69%, 45%)",
+      "Lahore": "hsl(210, 90%, 55%)",
+      "Islamabad": "hsl(38, 92%, 50%)",
+      "Faisalabad": "hsl(280, 65%, 55%)",
+      "Rawalpindi": "hsl(340, 75%, 55%)"
+    };
+    return colors[partner] || "hsl(0, 72%, 51%)";
+  };
+
+  // Filter delivery data based on view
+  const currentDeliveryData = deliveryView === "partners" && deliveryData.some(d => ["TCS", "PostEx", "Leopards", "M&P"].includes(d.name))
+    ? deliveryData.filter(d => ["TCS", "PostEx", "Leopards", "M&P"].includes(d.name))
+    : deliveryView === "cities" && deliveryData.some(d => ["Karachi", "Lahore", "Islamabad", "Faisalabad", "Rawalpindi"].includes(d.name))
+    ? deliveryData.filter(d => ["Karachi", "Lahore", "Islamabad", "Faisalabad", "Rawalpindi"].includes(d.name))
+    : deliveryData;
 
   const formatCurrency = (value: number) => {
     return `Rs ${value.toLocaleString('en-PK')}`;
@@ -530,12 +565,12 @@ const Index = () => {
                 <span className="text-xs text-success font-semibold">Avg. Success</span>
               </div>
               <ResponsiveContainer width="100%" height={140}>
-                <BarChart data={deliveryData} layout="vertical" barCategoryGap="15%">
+                <BarChart data={currentDeliveryData} layout="vertical" barCategoryGap="15%">
                   <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v}%`} />
                   <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} width={80} interval={0} />
                   <Tooltip content={<DeliveryTooltip />} cursor={false} />
                   <Bar dataKey="percentage" radius={[0, 6, 6, 0]}>
-                    {deliveryData.map((entry, i) => (
+                    {currentDeliveryData.map((entry, i) => (
                       <Cell key={i} fill={entry.color} />
                     ))}
                   </Bar>
