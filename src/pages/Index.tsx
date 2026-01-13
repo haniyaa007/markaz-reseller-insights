@@ -625,8 +625,6 @@ const Index = () => {
                       <th className="text-left py-3 px-4">Rank</th>
                       <th className="text-left py-3 px-4">Product</th>
                       <th className="text-left py-3 px-4">Category</th>
-                      <th className="text-left py-3 px-4">Supplier</th>
-                      <th className="text-center py-3 px-4">Status</th>
                       <th className="text-right py-3 px-4">Total Orders</th>
                       <th className="text-right py-3 px-4">Delivered</th>
                       <th className="text-right py-3 px-4">Delivery %</th>
@@ -653,15 +651,6 @@ const Index = () => {
                         <td className="py-3 px-4">
                           <p className="text-sm font-medium">{product.Category}</p>
                           <p className="text-[10px] text-muted-foreground">{product.Subcategory}</p>
-                        </td>
-                        <td className="py-3 px-4 text-sm">{product.Supplier}</td>
-                        <td className="py-3 px-4 text-center">
-                          <span className={cn(
-                            "inline-block px-2 py-1 rounded-full text-[10px] font-semibold",
-                            product.ProductStatus === "Active" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
-                          )}>
-                            {product.ProductStatus}
-                          </span>
                         </td>
                         <td className="py-3 px-4 text-right font-semibold text-sm">{product.TotalOrders}</td>
                         <td className="py-3 px-4 text-right font-semibold text-sm text-success">{product.DeliveredOrders}</td>
