@@ -323,24 +323,28 @@ const Index = () => {
             </div>
           </MetricInfoPopover>
 
-          <MetricInfoPopover metricKey="pending">
-            <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
+          {/* Pending Orders - Coming Soon */}
+          <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card relative overflow-hidden">
+            {/* Blurred Content */}
+            <div className="blur-sm opacity-50">
               <div className="flex items-center justify-between">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
-                  Pending
-                  <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity hidden sm:block" />
-                </p>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Pending</p>
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
               </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingData ? "Loading..." : currentPeriodData ? (currentPeriodData.pending_orders || 0).toLocaleString() : "0"}
-              </p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">0</p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
                 <span className="text-[10px] sm:text-xs font-semibold text-success">-8.5%</span>
               </div>
             </div>
-          </MetricInfoPopover>
+            {/* Coming Soon Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
+              <div className="text-center">
+                <Clock className="w-6 h-6 text-warning mx-auto mb-1" />
+                <p className="text-xs font-semibold text-foreground">Jaldi Aa Raha Hai</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ROW 2-4: Revenue Overview (left) + Customers/Order Status/Delivery (right) */}
@@ -415,49 +419,45 @@ const Index = () => {
               </div>
             </MetricInfoPopover>
 
-            {/* Order Status */}
-            <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
-              <h3 className="font-bold text-foreground text-sm mb-3">Order Status</h3>
-              <div className="flex items-center gap-4">
-                <div className="relative flex-shrink-0">
-                  <ResponsiveContainer width={120} height={120}>
-                    <PieChart>
-                      <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                        {orderStatusData.map((entry, i) => (
-                          <Cell key={i} fill={entry.color} className="cursor-pointer hover:opacity-80 transition-opacity" />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg pointer-events-none">
-                                <div className="flex items-center gap-2">
-                                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: data.color }} />
-                                  <span className="text-xs font-semibold text-foreground">{data.name}</span>
-                                  <span className="text-sm font-bold" style={{ color: data.color }}>{data.value}</span>
-                                </div>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                    <p className="text-xl font-bold">{totalOrdersForPie.toLocaleString()}</p>
+            {/* Order Status - Coming Soon */}
+            <div className="bg-card rounded-2xl p-4 border border-border shadow-card relative overflow-hidden">
+              {/* Blurred Content */}
+              <div className="blur-sm opacity-40">
+                <h3 className="font-bold text-foreground text-sm mb-3">Order Status</h3>
+                <div className="flex items-center gap-4">
+                  <div className="relative flex-shrink-0">
+                    <ResponsiveContainer width={120} height={120}>
+                      <PieChart>
+                        <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                          {orderStatusData.map((entry, i) => (
+                            <Cell key={i} fill={entry.color} />
+                          ))}
+                        </Pie>
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                      <p className="text-xl font-bold">0</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
+                    {orderStatusData.map((item) => (
+                      <div key={item.name} className="flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                        <span className="text-xs text-muted-foreground">{item.name}</span>
+                        <span className="text-xs font-bold text-foreground ml-auto">0</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
-                  {orderStatusData.map((item) => (
-                    <div key={item.name} className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
-                      <span className="text-xs text-muted-foreground">{item.name}</span>
-                      <span className="text-xs font-bold text-foreground ml-auto">{item.value}</span>
-                    </div>
-                  ))}
+              </div>
+              {/* Coming Soon Overlay */}
+              <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-[3px]">
+                <div className="text-center">
+                  <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Clock className="w-6 h-6 text-primary" />
+                  </div>
+                  <p className="text-sm font-bold text-foreground">Jaldi Aa Raha Hai</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Order status tracking</p>
                 </div>
               </div>
             </div>
@@ -524,7 +524,7 @@ const Index = () => {
           <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
             <div className="p-4 border-b border-border">
               <h3 className="font-bold text-foreground">Profit Bands Analysis</h3>
-              <p className="text-xs text-muted-foreground">Performance by profit margin for 30 Days</p>
+              <p className="text-xs text-muted-foreground">Performance by profit margin for {selectedDateLabel}</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -539,26 +539,91 @@ const Index = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
-                  {sheetData.profitBand.map((band, index) => (
-                    <tr key={index} className="hover:bg-muted/30 transition-colors">
-                      <td className="py-3 px-4">
-                        <span className={cn(
-                          "inline-block px-2 py-1 rounded-full text-xs font-semibold",
-                          band.profit_band === "0-40%" && "bg-destructive/10 text-destructive",
-                          band.profit_band === "40-80%" && "bg-warning/10 text-warning",
-                          band.profit_band === "80-100%" && "bg-info/10 text-info",
-                          band.profit_band === "100-150%" && "bg-success/10 text-success"
-                        )}>
-                          {band.profit_band}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right font-semibold">{formatCurrency(band.reseller_pay_30d)}</td>
-                      <td className="py-3 px-4 text-right font-semibold text-success">{formatCurrency(band.money_earned_30d)}</td>
-                      <td className="py-3 px-4 text-right font-semibold text-primary">{formatCurrency(band.potential_earnings_30d)}</td>
-                      <td className="py-3 px-4 text-right font-semibold">{band.delivered_30d}</td>
-                      <td className="py-3 px-4 text-right font-semibold text-destructive">{band.returned_lost_30d}</td>
-                    </tr>
-                  ))}
+                  {sheetData.profitBand.map((band, index) => {
+                    // Get data based on selected date range
+                    const getProfitBandData = () => {
+                      switch (dateRange) {
+                        case "7days":
+                          return {
+                            resellerPay: band.reseller_pay_7d,
+                            moneyEarned: band.money_earned_7d,
+                            potentialEarnings: band.potential_earnings_7d,
+                            delivered: band.delivered_7d,
+                            returnedLost: band.returned_lost_7d
+                          };
+                        case "30days":
+                          return {
+                            resellerPay: band.reseller_pay_30d,
+                            moneyEarned: band.money_earned_30d,
+                            potentialEarnings: band.potential_earnings_30d,
+                            delivered: band.delivered_30d,
+                            returnedLost: band.returned_lost_30d
+                          };
+                        case "3months":
+                          return {
+                            resellerPay: band.reseller_pay_3m,
+                            moneyEarned: band.money_earned_3m,
+                            potentialEarnings: band.potential_earnings_3m,
+                            delivered: band.delivered_3m,
+                            returnedLost: band.returned_lost_3m
+                          };
+                        case "6months":
+                          return {
+                            resellerPay: band.reseller_pay_6m,
+                            moneyEarned: band.money_earned_6m,
+                            potentialEarnings: band.potential_earnings_6m,
+                            delivered: band.delivered_6m,
+                            returnedLost: band.returned_lost_6m
+                          };
+                        case "1year":
+                          return {
+                            resellerPay: band.reseller_pay_1y,
+                            moneyEarned: band.money_earned_1y,
+                            potentialEarnings: band.potential_earnings_1y,
+                            delivered: band.delivered_1y,
+                            returnedLost: band.returned_lost_1y
+                          };
+                        case "lifetime":
+                          return {
+                            resellerPay: band.reseller_pay_all,
+                            moneyEarned: band.money_earned_all,
+                            potentialEarnings: band.potential_earnings_all,
+                            delivered: band.delivered_all,
+                            returnedLost: band.returned_lost_all
+                          };
+                        default:
+                          return {
+                            resellerPay: band.reseller_pay_30d,
+                            moneyEarned: band.money_earned_30d,
+                            potentialEarnings: band.potential_earnings_30d,
+                            delivered: band.delivered_30d,
+                            returnedLost: band.returned_lost_30d
+                          };
+                      }
+                    };
+                    const data = getProfitBandData();
+                    
+                    return (
+                      <tr key={index} className="hover:bg-muted/30 transition-colors">
+                        <td className="py-3 px-4">
+                          <span className={cn(
+                            "inline-block px-2 py-1 rounded-full text-xs font-semibold",
+                            band.profit_band === "0-40%" && "bg-destructive/10 text-destructive",
+                            band.profit_band === "40-80%" && "bg-warning/10 text-warning",
+                            band.profit_band === "80-100%" && "bg-info/10 text-info",
+                            band.profit_band === "100-150%" && "bg-success/10 text-success"
+                          )}>
+                            {band.profit_band}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right font-semibold">{formatCurrency(data.resellerPay || 0)}</td>
+                        <td className="py-3 px-4 text-right font-semibold text-success">{formatCurrency(data.moneyEarned || 0)}</td>
+                        <td className="py-3 px-4 text-right font-semibold text-primary">{formatCurrency(data.potentialEarnings || 0)}</td>
+                        <td className="py-3 px-4 text-right font-semibold">{(data.delivered || 0).toLocaleString()}</td>
+                        <td className="py-3 px-4 text-right font-semibold text-destructive">{(data.returnedLost || 0).toLocaleString()}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

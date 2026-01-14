@@ -41,16 +41,42 @@ export interface DeliveryPerformanceCity {
 // Profit Band data interface
 export interface ProfitBand {
   profit_band: string;
+  // 7 Days
   reseller_pay_7d: number;
   money_earned_7d: number;
   potential_earnings_7d: number;
   delivered_7d: number;
   returned_lost_7d: number;
+  // 30 Days
   reseller_pay_30d: number;
   money_earned_30d: number;
   potential_earnings_30d: number;
   delivered_30d: number;
   returned_lost_30d: number;
+  // 3 Months
+  reseller_pay_3m: number;
+  money_earned_3m: number;
+  potential_earnings_3m: number;
+  delivered_3m: number;
+  returned_lost_3m: number;
+  // 6 Months
+  reseller_pay_6m: number;
+  money_earned_6m: number;
+  potential_earnings_6m: number;
+  delivered_6m: number;
+  returned_lost_6m: number;
+  // 1 Year
+  reseller_pay_1y: number;
+  money_earned_1y: number;
+  potential_earnings_1y: number;
+  delivered_1y: number;
+  returned_lost_1y: number;
+  // All Time
+  reseller_pay_all: number;
+  money_earned_all: number;
+  potential_earnings_all: number;
+  delivered_all: number;
+  returned_lost_all: number;
 }
 
 // Top Products data interface
@@ -187,16 +213,42 @@ function convertProfitBand(apiData: any[]): ProfitBand[] {
   
   return apiData.map(item => ({
     profit_band: item['Profit Band'] || item.profit_band || '',
-    reseller_pay_7d: Number(item['What Resellers Pay (7D)'] || item.reseller_pay_7d || 0),
-    money_earned_7d: Number(item['Money Earned (7D)'] || item.money_earned_7d || 0),
-    potential_earnings_7d: Number(item['Potential Earnings (7D)'] || item.potential_earnings_7d || 0),
-    delivered_7d: Number(item['Delivered (7D)'] || item.delivered_7d || 0),
-    returned_lost_7d: Number(item['Returned & Lost (7D)'] || item.returned_lost_7d || 0),
-    reseller_pay_30d: Number(item['What Resellers Pay (30D)'] || item.reseller_pay_30d || 0),
-    money_earned_30d: Number(item['Money Earned (30D)'] || item.money_earned_30d || 0),
-    potential_earnings_30d: Number(item['Potential Earnings (30D)'] || item.potential_earnings_30d || 0),
-    delivered_30d: Number(item['Delivered (30D)'] || item.delivered_30d || 0),
-    returned_lost_30d: Number(item['Returned & Lost (30D)'] || item.returned_lost_30d || 0)
+    // 7 Days
+    reseller_pay_7d: Number(item['What Resellers Pay (7D)'] || 0),
+    money_earned_7d: Number(item['Money Earned (7D)'] || 0),
+    potential_earnings_7d: Number(item['Potential Earnings (7D)'] || 0),
+    delivered_7d: Number(item['Delivered (7D)'] || 0),
+    returned_lost_7d: Number(item['Returned & Lost (7D)'] || 0),
+    // 30 Days
+    reseller_pay_30d: Number(item['What Resellers Pay (30D)'] || 0),
+    money_earned_30d: Number(item['Money Earned (30D)'] || 0),
+    potential_earnings_30d: Number(item['Potential Earnings (30D)'] || 0),
+    delivered_30d: Number(item['Delivered (30D)'] || 0),
+    returned_lost_30d: Number(item['Returned & Lost (30D)'] || 0),
+    // 3 Months
+    reseller_pay_3m: Number(item['What Resellers Pay (3M)'] || 0),
+    money_earned_3m: Number(item['Money Earned (3M)'] || 0),
+    potential_earnings_3m: Number(item['Potential Earnings (3M)'] || 0),
+    delivered_3m: Number(item['Delivered (3M)'] || 0),
+    returned_lost_3m: Number(item['Returned & Lost (3M)'] || 0),
+    // 6 Months
+    reseller_pay_6m: Number(item['What Resellers Pay (6M)'] || 0),
+    money_earned_6m: Number(item['Money Earned (6M)'] || 0),
+    potential_earnings_6m: Number(item['Potential Earnings (6M)'] || 0),
+    delivered_6m: Number(item['Delivered (6M)'] || 0),
+    returned_lost_6m: Number(item['Returned & Lost (6M)'] || 0),
+    // 1 Year
+    reseller_pay_1y: Number(item['What Resellers Pay (1Y)'] || 0),
+    money_earned_1y: Number(item['Money Earned (1Y)'] || 0),
+    potential_earnings_1y: Number(item['Potential Earnings (1Y)'] || 0),
+    delivered_1y: Number(item['Delivered (1Y)'] || 0),
+    returned_lost_1y: Number(item['Returned & Lost (1Y)'] || 0),
+    // All Time
+    reseller_pay_all: Number(item['What Resellers Pay (All)'] || 0),
+    money_earned_all: Number(item['Money Earned (All)'] || 0),
+    potential_earnings_all: Number(item['Potential Earnings (All)'] || 0),
+    delivered_all: Number(item['Delivered (All)'] || 0),
+    returned_lost_all: Number(item['Returned & Lost (All)'] || 0)
   }));
 }
 
