@@ -332,7 +332,7 @@ const Index = () => {
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
               </div>
               <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingData ? "Loading..." : sheetData ? sheetData.basics.pending_inprogress_orders.toLocaleString() : "0"}
+                {loadingData ? "Loading..." : currentPeriodData ? (currentPeriodData.pending_orders || 0).toLocaleString() : "0"}
               </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
