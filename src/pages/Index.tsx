@@ -58,16 +58,6 @@ const dateRanges = [
   { id: "lifetime", label: "All Time" },
 ];
 
-// Product Period Options (mapped from sheet Period values)
-const productPeriodOptions = [
-  { id: "7_DAYS", label: "7 Days" },
-  { id: "30_DAYS", label: "30 Days" },
-  { id: "3_MONTHS", label: "3 Months" },
-  { id: "6_MONTHS", label: "6 Months" },
-  { id: "1_YEAR", label: "1 Year" },
-  { id: "ALL_TIME", label: "All Time" },
-];
-
 // Metric Info Popover Component
 const MetricInfoPopover = ({ metricKey, children }: { metricKey: string; children: React.ReactNode }) => {
   const metric = metricDefinitions[metricKey];
@@ -135,7 +125,6 @@ const DeliveryTooltip = ({ active, payload }: any) => {
 
 const Index = () => {
   const [dateRange, setDateRange] = useState("30days");
-  const [productPeriod, setProductPeriod] = useState("7_DAYS");
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [deliveryView, setDeliveryView] = useState<"partners" | "cities">("partners");
   
@@ -144,6 +133,19 @@ const Index = () => {
   const [loadingData, setLoadingData] = useState(true);
 
   const selectedDateLabel = dateRanges.find(r => r.id === dateRange)?.label;
+
+  // Map dateRange to topProducts period format
+  const getProductPeriod = (range: string): string => {
+    const mapping: Record<string, string> = {
+      "7days": "7_DAYS",
+      "30days": "30_DAYS",
+      "3months": "3_MONTHS",
+      "6months": "6_MONTHS",
+      "1year": "1_YEAR",
+      "lifetime": "ALL_TIME"
+    };
+    return mapping[range] || "30_DAYS";
+  };
 
   // Fetch data from Google Sheets
   useEffect(() => {
@@ -164,10 +166,11 @@ const Index = () => {
   };
 
   // Filter and sort products by selected period and delivery percentage
+  const productPeriod = getProductPeriod(dateRange);
   const filteredProducts = sheetData 
     ? filterProductsByPeriod(sheetData.topProducts, productPeriod)
         .sort((a, b) => b.DeliveryPercentage - a.DeliveryPercentage)
-        .slice(0, 5)
+        .slice(0, 10)
     : [];
 
   // Prepare delivery data for charts
@@ -633,27 +636,9 @@ const Index = () => {
         {/* ROW 6: TOP SELLING PRODUCTS */}
         <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
           <div className="p-4 border-b border-border">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h3 className="font-bold text-foreground">Top Selling Products</h3>
-                <p className="text-xs text-muted-foreground">Sorted by Delivery % for {productPeriodOptions.find(o => o.id === productPeriod)?.label}</p>
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {productPeriodOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    onClick={() => setProductPeriod(option.id)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
-                      productPeriod === option.id
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    )}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
+            <div>
+              <h3 className="font-bold text-foreground">Top Selling Products</h3>
+              <p className="text-xs text-muted-foreground">Sorted by Delivery % for {selectedDateLabel}</p>
             </div>
           </div>
 
