@@ -2,21 +2,27 @@ import { useState, useEffect } from "react";
 import { 
   Wallet, TrendingUp, Clock, ShoppingBag, Users,
   Download, ArrowUpRight, ArrowDownRight,
-  Truck, Package, ChevronDown, Check, RefreshCw, Info,
-  CheckCircle2, XCircle, AlertCircle
- } from "lucide-react";
- import { cn } from "@/lib/utils";
- import { 
+  CheckCircle2, Truck, XCircle, Package, ChevronDown, Check, RefreshCw, AlertCircle, Info
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { 
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
-  Cell, BarChart, Bar, CartesianGrid, PieChart, Pie
- } from "recharts";
-
+  PieChart, Pie, Cell, BarChart, Bar, CartesianGrid
+} from "recharts";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
- import { fetchSheetDataByPeriod, type SheetData, filterProductsByPeriod } from "@/lib/googlesheet";
+import { 
+  fetchSheetData, 
+  type SheetData, 
+  type BasicsData,
+  type TopProduct, 
+  filterProductsByPeriod,
+  findPeriodData,
+  periodMapping
+} from "@/lib/googlesheet";
 
 // Metric Definitions
 const metricDefinitions: Record<string, { title: string; description: string }> = {
@@ -28,25 +34,17 @@ const metricDefinitions: Record<string, { title: string; description: string }> 
     title: "Profit Earned",
     description: "Your net earnings after deducting product costs and platform fees from total revenue."
   },
-  commission: {
-    title: "Commission",
-    description: "The fee earned by the platform from your sales. This is typically a percentage of each transaction."
+  orders: {
+    title: "Total Orders",
+    description: "The complete count of all orders placed within the selected time period, regardless of status."
   },
   pending: {
     title: "Pending Orders",
     description: "Orders that have been placed but not yet shipped or processed. Lower numbers indicate efficient order fulfillment."
   },
-  orders: {
-    title: "Total Orders",
-    description: "The complete count of all orders placed within the selected time period, regardless of status."
-  },
   customers: {
     title: "Customers",
     description: "Unique buyers who have made at least one purchase. Higher numbers indicate growing market reach."
-  },
-  conversion: {
-    title: "Conversion Rate",
-    description: "Percentage of impressions (product views) that resulted in actual purchases. Calculated as (Orders ÷ Impressions) × 100."
   }
 };
 
@@ -69,95 +67,6 @@ const productPeriodOptions = [
   { id: "1_YEAR", label: "1 Year" },
   { id: "ALL_TIME", label: "All Time" },
 ];
-
-// Order Status Data (for Coming Soon UI)
-const orderStatusData = [
-  { name: "Delivered", value: 892, color: "hsl(152, 69%, 45%)", description: "Successfully completed orders" },
-  { name: "In Transit", value: 186, color: "hsl(210, 90%, 55%)", description: "Orders currently being shipped" },
-  { name: "Pending", value: 74, color: "hsl(38, 92%, 50%)", description: "Orders awaiting processing" },
-  { name: "Cancelled", value: 43, color: "hsl(0, 72%, 51%)", description: "Orders that were cancelled" },
-  { name: "Returned", value: 52, color: "hsl(280, 65%, 55%)", description: "Orders that were returned" },
-];
-
-// Profit Bands Data
-interface ProfitBandData {
-  band: string;
-  resellerPay: number;
-  moneyEarned: number;
-  potentialEarnings: number;
-  delivered: number;
-  returnedLost: number;
-}
-
-const profitBandsData: Record<string, ProfitBandData[]> = {
-  "7days": [
-    { band: "0-40%", resellerPay: 1356.89, moneyEarned: 188.84, potentialEarnings: 219.94, delivered: 62, returnedLost: 14 },
-    { band: "40-80%", resellerPay: 1224.12, moneyEarned: 698.82, potentialEarnings: 759.94, delivered: 32, returnedLost: 5 },
-    { band: "80-100%", resellerPay: 947.56, moneyEarned: 864.52, potentialEarnings: 895.49, delivered: 20, returnedLost: 9 },
-    { band: "100-150%", resellerPay: 819.13, moneyEarned: 1030.22, potentialEarnings: 1093.11, delivered: 27, returnedLost: 5 },
-  ],
-  "30days": [
-    { band: "0-40%", resellerPay: 1342.53, moneyEarned: 173.65, potentialEarnings: 216.22, delivered: 168, returnedLost: 66 },
-    { band: "40-80%", resellerPay: 1181.91, moneyEarned: 675.38, potentialEarnings: 775.76, delivered: 76, returnedLost: 69 },
-    { band: "80-100%", resellerPay: 975.02, moneyEarned: 877.05, potentialEarnings: 906.57, delivered: 27, returnedLost: 47 },
-    { band: "100-150%", resellerPay: 803.48, moneyEarned: 992.70, potentialEarnings: 1092.56, delivered: 56, returnedLost: 57 },
-  ],
-  "3months": [
-    { band: "0-40%", resellerPay: 1332.69, moneyEarned: 162.52, potentialEarnings: 219.83, delivered: 773, returnedLost: 183 },
-    { band: "40-80%", resellerPay: 1135.75, moneyEarned: 647.56, potentialEarnings: 782.20, delivered: 309, returnedLost: 382 },
-    { band: "80-100%", resellerPay: 928.39, moneyEarned: 826.22, potentialEarnings: 905.74, delivered: 102, returnedLost: 77 },
-    { band: "100-150%", resellerPay: 779.86, moneyEarned: 964.43, potentialEarnings: 1089.78, delivered: 220, returnedLost: 82 },
-  ],
-  "6months": [
-    { band: "0-40%", resellerPay: 1305.22, moneyEarned: 155.75, potentialEarnings: 219.27, delivered: 1665, returnedLost: 338 },
-    { band: "40-80%", resellerPay: 1061.47, moneyEarned: 613.54, potentialEarnings: 780.76, delivered: 697, returnedLost: 236 },
-    { band: "80-100%", resellerPay: 881.31, moneyEarned: 782.70, potentialEarnings: 905.91, delivered: 306, returnedLost: 203 },
-    { band: "100-150%", resellerPay: 765.85, moneyEarned: 952.25, potentialEarnings: 1089.06, delivered: 534, returnedLost: 105 },
-  ],
-  "1year": [
-    { band: "0-40%", resellerPay: 1305.97, moneyEarned: 149.09, potentialEarnings: 220.14, delivered: 3515, returnedLost: 451 },
-    { band: "40-80%", resellerPay: 1005.83, moneyEarned: 582.51, potentialEarnings: 777.28, delivered: 1413, returnedLost: 351 },
-    { band: "80-100%", resellerPay: 816.83, moneyEarned: 724.29, potentialEarnings: 900.26, delivered: 629, returnedLost: 15 },
-    { band: "100-150%", resellerPay: 701.77, moneyEarned: 861.21, potentialEarnings: 1081.97, delivered: 935, returnedLost: 68 },
-  ],
-  "lifetime": [
-    { band: "0-40%", resellerPay: 1250.41, moneyEarned: 147.66, potentialEarnings: 217.99, delivered: 22300, returnedLost: 9394 },
-    { band: "40-80%", resellerPay: 897.83, moneyEarned: 507.43, potentialEarnings: 769.61, delivered: 5811, returnedLost: 2946 },
-    { band: "80-100%", resellerPay: 681.87, moneyEarned: 615.69, potentialEarnings: 890.29, delivered: 2509, returnedLost: 7325 },
-    { band: "100-150%", resellerPay: 636.87, moneyEarned: 725.10, potentialEarnings: 1081.17, delivered: 1993, returnedLost: 4521 },
-  ],
-};
-
-// Recent Orders Static Data (for Coming Soon UI)
-const allOrders = [
-  { id: "ORD-7829", customer: "Ahmed K.", amount: 880, profit: 88, status: "delivered", date: "Dec 20" },
-  { id: "ORD-7828", customer: "Fatima A.", amount: 1455, profit: 145, status: "in-progress", date: "Dec 19" },
-  { id: "ORD-7827", customer: "Usman S.", amount: 3758, profit: 376, status: "shippers-advice", date: "Dec 18" },
-  { id: "ORD-7826", customer: "Zainab H.", amount: 2152, profit: 215, status: "delivered", date: "Dec 17" },
-  { id: "ORD-7825", customer: "Bilal A.", amount: 927, profit: 93, status: "cancelled", date: "Dec 16" },
-  { id: "ORD-7824", customer: "Ayesha M.", amount: 1280, profit: 128, status: "returned", date: "Dec 15" },
-  { id: "ORD-7823", customer: "Hassan R.", amount: 650, profit: 65, status: "delivered", date: "Dec 14" },
-  { id: "ORD-7822", customer: "Sana T.", amount: 2890, profit: 289, status: "in-progress", date: "Dec 13" },
-  { id: "ORD-7821", customer: "Omar K.", amount: 1750, profit: 175, status: "shippers-advice", date: "Dec 12" },
-  { id: "ORD-7820", customer: "Nadia S.", amount: 3200, profit: 320, status: "delivered", date: "Dec 11" },
-];
-
-const orderFilters = [
-  { id: "all", label: "All", count: 1247 },
-  { id: "in-progress", label: "In-progress", count: 186 },
-  { id: "shippers-advice", label: "Shipper's Advice", count: 74 },
-  { id: "delivered", label: "Delivered", count: 892 },
-  { id: "returned", label: "Returned", count: 52 },
-  { id: "cancelled", label: "Cancelled", count: 43 },
-];
-
-const statusConfig: Record<string, { icon: any; color: string; label: string }> = {
-  delivered: { icon: CheckCircle2, color: "text-success", label: "Delivered" },
-  "in-progress": { icon: Clock, color: "text-warning", label: "In Progress" },
-  "shippers-advice": { icon: Package, color: "text-info", label: "Shipping" },
-  cancelled: { icon: XCircle, color: "text-destructive", label: "Cancelled" },
-  returned: { icon: AlertCircle, color: "text-muted-foreground", label: "Returned" },
-};
 
 // Metric Info Popover Component
 const MetricInfoPopover = ({ metricKey, children }: { metricKey: string; children: React.ReactNode }) => {
@@ -226,7 +135,6 @@ const DeliveryTooltip = ({ active, payload }: any) => {
 
 const Index = () => {
   const [dateRange, setDateRange] = useState("30days");
-  const [orderFilter, setOrderFilter] = useState("all");
   const [productPeriod, setProductPeriod] = useState("7_DAYS");
   const [showDateDropdown, setShowDateDropdown] = useState(false);
   const [deliveryView, setDeliveryView] = useState<"partners" | "cities">("partners");
@@ -236,70 +144,63 @@ const Index = () => {
   const [loadingData, setLoadingData] = useState(true);
 
   const selectedDateLabel = dateRanges.find(r => r.id === dateRange)?.label;
-  
-  // Map date range IDs to sheet period names
-  const getPeriodFromRange = (rangeId: string): string => {
-    const mapping: Record<string, string> = {
-      "7days": "7_DAYS",
-      "30days": "30_DAYS", 
-      "3months": "3_MONTHS",
-      "6months": "6_MONTHS",
-      "1year": "1_YEAR",
-      "lifetime": "ALL_TIME"
-    };
-    return mapping[rangeId] || "30_DAYS";
-  };
 
-  const currentPeriod = getPeriodFromRange(dateRange);
-  
-  // Fetch data from Google Sheets when component mounts or date range changes
+  // Fetch data from Google Sheets
   useEffect(() => {
     const loadData = async () => {
       setLoadingData(true);
-      try {
-        const data = await fetchSheetDataByPeriod(currentPeriod);
-        setSheetData(data);
-      } catch (error) {
-        console.error('Error loading sheet data:', error);
-      } finally {
-        setLoadingData(false);
-      }
+      const data = await fetchSheetData();
+      setSheetData(data);
+      setLoadingData(false);
     };
     loadData();
-  }, [dateRange]);
+  }, []);
 
-  const revenueChartData = (sheetData?.orderRevenueChart || []).map((row: any) => ({
-    name: row.month_name ?? row.name ?? row.month ?? row.period ?? "",
-    sales: Number(row.total_revenue ?? row.revenue ?? row.sales ?? 0),
-    orders: Number(row.total_orders ?? row.orders ?? 0),
-  }));
+  // Get current period data
+  const currentPeriodData = sheetData ? findPeriodData(sheetData.basics, dateRange) : null;
 
-  const deliveryRaw = deliveryView === "partners" ? (sheetData?.deliveryPerformanceCourier || []) : (sheetData?.deliveryPerformanceCity || []);
-  const deliveryData = deliveryRaw.map((row: any) => {
-    const successRate = Number(row.success_rate ?? row.percentage ?? 0);
-    const pct = successRate <= 1 ? successRate * 100 : successRate;
-    return {
-      name: row.partner ?? row.partner_name ?? row.partnr ?? row.city ?? row.city_name ?? row.name ?? "",
-      delivered: Number(row.successful_deliv ?? row.successful_deliveries ?? row.successful_deliveries ?? row.delivered_orders ?? row.delivered ?? 0),
-      total: Number(row.total_orders ?? row.total ?? 0),
-      percentage: Number.isFinite(pct) ? Number(pct.toFixed(1)) : 0,
-      color: "hsl(152, 69%, 45%)",
-    };
-  });
+  const formatCurrency = (value: number) => {
+    return `Rs ${value.toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
+  };
 
-  const avgDelivery = deliveryData.length
-    ? (deliveryData.reduce((sum: number, d: any) => sum + (d.percentage || 0), 0) / deliveryData.length).toFixed(1)
-    : "0";
-
+  // Filter and sort products by selected period and delivery percentage
   const filteredProducts = sheetData 
     ? filterProductsByPeriod(sheetData.topProducts, productPeriod)
-        .sort((a, b) => b.DeliveryPercentile - a.DeliveryPercentile)
+        .sort((a, b) => b.DeliveryPercentage - a.DeliveryPercentage)
         .slice(0, 5)
     : [];
 
-  const filteredOrders = orderFilter === "all" 
-    ? allOrders 
-    : allOrders.filter(order => order.status === orderFilter);
+  // Prepare delivery data for charts
+  const deliveryDataPartners = sheetData?.deliveryPerformanceCourier.map((item, idx) => ({
+    name: item.partner,
+    delivered: item.successful_deliveries,
+    total: item.total_orders,
+    percentage: (item.success_rate * 100),
+    color: ["hsl(152, 69%, 45%)", "hsl(210, 90%, 55%)", "hsl(38, 92%, 50%)", "hsl(280, 65%, 55%)"][idx % 4]
+  })) || [];
+
+  const deliveryDataCities = sheetData?.deliveryPerformanceCity.map((item, idx) => ({
+    name: item.city,
+    delivered: item.successful_deliveries,
+    total: item.total_orders,
+    percentage: (item.success_rate * 100),
+    color: ["hsl(152, 69%, 45%)", "hsl(210, 90%, 55%)", "hsl(38, 92%, 50%)", "hsl(280, 65%, 55%)"][idx % 4]
+  })) || [];
+
+  const deliveryData = deliveryView === "partners" ? deliveryDataPartners : deliveryDataCities;
+  const avgDelivery = deliveryData.length > 0 
+    ? (deliveryData.reduce((sum, d) => sum + d.percentage, 0) / deliveryData.length).toFixed(1)
+    : "0.0";
+
+  // Prepare order status data (mock for now, can be calculated from sheet data if available)
+  const orderStatusData = [
+    { name: "Delivered", value: currentPeriodData ? Math.round(currentPeriodData.avg_orders * 0.71) : 0, color: "hsl(152, 69%, 45%)" },
+    { name: "In Transit", value: currentPeriodData ? Math.round(currentPeriodData.avg_orders * 0.15) : 0, color: "hsl(210, 90%, 55%)" },
+    { name: "Pending", value: currentPeriodData?.pending_orders || 0, color: "hsl(38, 92%, 50%)" },
+    { name: "Cancelled", value: currentPeriodData ? Math.round(currentPeriodData.avg_orders * 0.03) : 0, color: "hsl(0, 72%, 51%)" },
+  ];
+
+  const totalOrdersForPie = orderStatusData.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
@@ -343,7 +244,10 @@ const Index = () => {
               )}
             </div>
             
-            <button className="p-2 sm:p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-all">
+            <button 
+              className="p-2 sm:p-2.5 rounded-xl bg-card border border-border hover:bg-muted transition-all"
+              onClick={() => window.location.reload()}
+            >
               <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             </button>
             
@@ -370,11 +274,11 @@ const Index = () => {
                   <Wallet className="w-4 h-4 sm:w-5 sm:h-5 opacity-80" />
                 </div>
                 <p className="text-xl sm:text-2xl md:text-3xl font-extrabold mt-1.5 sm:mt-2">
-                  {loadingData ? "Loading..." : sheetData ? `Rs ${sheetData.basics.total_revenue.toLocaleString()}` : "Rs 0"}
+                  {loadingData ? "Loading..." : currentPeriodData ? formatCurrency(currentPeriodData.avg_revenue) : "Rs 0"}
                 </p>
                 <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
-                  <ArrowUpRight className="w-3.5 h-3.5 text-success" />
-                  <span className="text-xs font-semibold text-success">+18.2%</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <span className="text-xs sm:text-sm font-semibold">+18.2%</span>
                 </div>
               </div>
             </div>
@@ -390,7 +294,7 @@ const Index = () => {
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-success/10"><TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-success" /></div>
               </div>
               <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingData ? "Loading..." : sheetData ? `Rs ${sheetData.basics.total_profit.toLocaleString()}` : "Rs 0"}
+                {loadingData ? "Loading..." : currentPeriodData ? formatCurrency(currentPeriodData.avg_profit) : "Rs 0"}
               </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
@@ -409,7 +313,7 @@ const Index = () => {
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-info/10"><ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-info" /></div>
               </div>
               <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
-                {loadingData ? "Loading..." : sheetData ? sheetData.basics.total_orders.toLocaleString() : "0"}
+                {loadingData ? "Loading..." : currentPeriodData ? Math.round(currentPeriodData.avg_orders).toLocaleString() : "0"}
               </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowUpRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
@@ -418,28 +322,24 @@ const Index = () => {
             </div>
           </MetricInfoPopover>
 
-          {/* Pending Card - Coming Soon */}
-          <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card relative overflow-hidden">
-            <div className="flex items-center justify-between opacity-30">
-              <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
-                Pending
-                <Info className="w-3 h-3 opacity-40 hidden sm:block" />
-              </p>
-              <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
-            </div>
-            <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2 opacity-30">4</p>
-            <div className="flex items-center gap-1 mt-1.5 sm:mt-2 opacity-30">
-              <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
-              <span className="text-[10px] sm:text-xs font-semibold text-success">-8.5%</span>
-            </div>
-            {/* Coming Soon Overlay */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/80 backdrop-blur-[1px]">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-warning/10 flex items-center justify-center mb-2">
-                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-warning" />
+          <MetricInfoPopover metricKey="pending">
+            <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
+              <div className="flex items-center justify-between">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  Pending
+                  <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity hidden sm:block" />
+                </p>
+                <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
               </div>
-              <p className="text-sm sm:text-base font-bold text-foreground">Coming Soon</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
+                {loadingData ? "Loading..." : sheetData ? sheetData.basics.pending_inprogress_orders.toLocaleString() : "0"}
+              </p>
+              <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
+                <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
+                <span className="text-[10px] sm:text-xs font-semibold text-success">-8.5%</span>
+              </div>
             </div>
-          </div>
+          </MetricInfoPopover>
         </div>
 
         {/* ROW 2-4: Revenue Overview (left) + Customers/Order Status/Delivery (right) */}
@@ -457,27 +357,36 @@ const Index = () => {
                   <span className="flex items-center gap-1.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-info" /> Orders</span>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={380}>
-                <AreaChart data={revenueChartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.25} />
-                      <stop offset="100%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0.2} />
-                      <stop offset="100%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 90%)" vertical={false} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} dy={8} />
-                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v/1000}k`} width={35} />
-                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(210, 90%, 55%)" }} width={30} />
-                  <Tooltip content={<SalesTooltip />} />
-                  <Area yAxisId="left" type="monotone" dataKey="sales" stroke="hsl(152, 69%, 45%)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
-                  <Area yAxisId="right" type="monotone" dataKey="orders" stroke="hsl(210, 90%, 55%)" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
-                </AreaChart>
-              </ResponsiveContainer>
+              {loadingData || !sheetData?.orderRevenueChart.length ? (
+                <div className="flex items-center justify-center h-[380px]">
+                  <div className="text-center">
+                    <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">Loading chart data...</p>
+                  </div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={380}>
+                  <AreaChart data={sheetData.orderRevenueChart} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.25} />
+                        <stop offset="100%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0.2} />
+                        <stop offset="100%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 90%)" vertical={false} />
+                    <XAxis dataKey="month_name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} dy={8} />
+                    <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${(v/1000000).toFixed(0)}M`} width={35} />
+                    <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(210, 90%, 55%)" }} width={30} />
+                    <Tooltip content={<SalesTooltip />} />
+                    <Area yAxisId="left" type="monotone" dataKey="total_revenue" stroke="hsl(152, 69%, 45%)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
+                    <Area yAxisId="right" type="monotone" dataKey="total_orders" stroke="hsl(210, 90%, 55%)" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
 
@@ -500,50 +409,55 @@ const Index = () => {
                   </div>
                 </div>
                 <p className="text-2xl font-bold mt-2">
-                  {loadingData ? "Loading..." : sheetData ? sheetData.basics.customers.toLocaleString() : "0"}
+                  {loadingData ? "Loading..." : currentPeriodData ? Math.round(currentPeriodData.avg_customers).toLocaleString() : "0"}
                 </p>
               </div>
             </MetricInfoPopover>
 
-            {/* Order Status - Coming Soon */}
-            <div className="bg-card rounded-2xl p-4 border border-border shadow-card relative overflow-hidden">
-              <div className="opacity-20">
-                <h3 className="font-bold text-foreground text-sm mb-3">Order Status</h3>
-                <div className="flex items-center gap-4">
-                  <div className="relative flex-shrink-0">
-                    <ResponsiveContainer width={120} height={120}>
-                      <PieChart>
-                        <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                          {orderStatusData.map((entry, i) => (
-                            <Cell key={i} fill={entry.color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                      <p className="text-xl font-bold">1,195</p>
+            {/* Order Status */}
+            <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
+              <h3 className="font-bold text-foreground text-sm mb-3">Order Status</h3>
+              <div className="flex items-center gap-4">
+                <div className="relative flex-shrink-0">
+                  <ResponsiveContainer width={120} height={120}>
+                    <PieChart>
+                      <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                        {orderStatusData.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} className="cursor-pointer hover:opacity-80 transition-opacity" />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg pointer-events-none">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-2.5 h-2.5 rounded-full" style={{ background: data.color }} />
+                                  <span className="text-xs font-semibold text-foreground">{data.name}</span>
+                                  <span className="text-sm font-bold" style={{ color: data.color }}>{data.value}</span>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return null;
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                    <p className="text-xl font-bold">{totalOrdersForPie.toLocaleString()}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
+                  {orderStatusData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                      <span className="text-xs text-muted-foreground">{item.name}</span>
+                      <span className="text-xs font-bold text-foreground ml-auto">{item.value}</span>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
-                    {orderStatusData.map((item) => (
-                      <div key={item.name} className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
-                        <span className="text-xs text-muted-foreground">{item.name}</span>
-                        <span className="text-xs font-bold text-foreground ml-auto">{item.value}</span>
-                      </div>
-                    ))}
-                  </div>
+                  ))}
                 </div>
-              </div>
-              {/* Coming Soon Overlay */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-card/80 backdrop-blur-[1px]">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                  <Clock className="w-6 h-6 text-primary" />
-                </div>
-                <p className="text-base font-bold text-foreground">Coming Soon</p>
-                <p className="text-xs text-muted-foreground text-center px-4 mt-1">
-                  Order status tracking jald aa raha hai!
-                </p>
               </div>
             </div>
 
@@ -551,7 +465,10 @@ const Index = () => {
             <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <h3 className="font-bold text-foreground">Delivery Performance</h3>
+                  <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
+                    <Truck className="w-4 h-4 text-primary" />
+                    Delivery Performance
+                  </h3>
                   <p className="text-[10px] text-muted-foreground mt-0.5">Success rate by {deliveryView}</p>
                 </div>
                 <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
@@ -579,23 +496,75 @@ const Index = () => {
                 <p className="text-2xl font-bold text-primary">{avgDelivery}%</p>
                 <span className="text-xs text-success font-semibold">Avg. Success</span>
               </div>
-              <ResponsiveContainer width="100%" height={140}>
-                <BarChart data={deliveryData} layout="vertical" barCategoryGap="15%">
-                  <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v}%`} />
-                  <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} width={80} interval={0} />
-                  <Tooltip content={<DeliveryTooltip />} cursor={false} />
-                  <Bar dataKey="percentage" radius={[0, 6, 6, 0]}>
-                    {deliveryData.map((entry: any, i: number) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {loadingData || deliveryData.length === 0 ? (
+                <div className="flex items-center justify-center h-[140px]">
+                  <p className="text-sm text-muted-foreground">Loading delivery data...</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={140}>
+                  <BarChart data={deliveryData} layout="vertical" barCategoryGap="15%">
+                    <XAxis type="number" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${v}%`} />
+                    <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} width={80} interval={0} />
+                    <Tooltip content={<DeliveryTooltip />} cursor={false} />
+                    <Bar dataKey="percentage" radius={[0, 6, 6, 0]}>
+                      {deliveryData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
         </div>
 
-        {/* ROW 5: TOP SELLING PRODUCTS */}
+        {/* ROW 5: PROFIT BANDS ANALYSIS */}
+        {sheetData && sheetData.profitBand.length > 0 && (
+          <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
+            <div className="p-4 border-b border-border">
+              <h3 className="font-bold text-foreground">Profit Bands Analysis</h3>
+              <p className="text-xs text-muted-foreground">Performance by profit margin for 30 Days</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    <th className="text-left py-3 px-4">Profit Band</th>
+                    <th className="text-right py-3 px-4">Reseller Pay</th>
+                    <th className="text-right py-3 px-4">Money Earned</th>
+                    <th className="text-right py-3 px-4">Potential Earnings</th>
+                    <th className="text-right py-3 px-4">Delivered</th>
+                    <th className="text-right py-3 px-4">Returned & Lost</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {sheetData.profitBand.map((band, index) => (
+                    <tr key={index} className="hover:bg-muted/30 transition-colors">
+                      <td className="py-3 px-4">
+                        <span className={cn(
+                          "inline-block px-2 py-1 rounded-full text-xs font-semibold",
+                          band.profit_band === "0-40%" && "bg-destructive/10 text-destructive",
+                          band.profit_band === "40-80%" && "bg-warning/10 text-warning",
+                          band.profit_band === "80-100%" && "bg-info/10 text-info",
+                          band.profit_band === "100-150%" && "bg-success/10 text-success"
+                        )}>
+                          {band.profit_band}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right font-semibold">{formatCurrency(band.reseller_pay_30d)}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-success">{formatCurrency(band.money_earned_30d)}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-primary">{formatCurrency(band.potential_earnings_30d)}</td>
+                      <td className="py-3 px-4 text-right font-semibold">{band.delivered_30d}</td>
+                      <td className="py-3 px-4 text-right font-semibold text-destructive">{band.returned_lost_30d}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* ROW 6: TOP SELLING PRODUCTS */}
         <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
           <div className="p-4 border-b border-border">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -658,10 +627,10 @@ const Index = () => {
                       </div>
                       <div className={cn(
                         "px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1",
-                        product.DeliveryPercentile >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentile >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                        product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                       )}>
                         <Truck className="w-3 h-3" />
-                        {product.DeliveryPercentile.toFixed(1)}%
+                        {product.DeliveryPercentage.toFixed(1)}%
                       </div>
                     </div>
                   </div>
@@ -676,6 +645,8 @@ const Index = () => {
                       <th className="text-left py-3 px-4">Rank</th>
                       <th className="text-left py-3 px-4">Product</th>
                       <th className="text-left py-3 px-4">Category</th>
+                      <th className="text-left py-3 px-4">Supplier</th>
+                      <th className="text-center py-3 px-4">Status</th>
                       <th className="text-right py-3 px-4">Total Orders</th>
                       <th className="text-right py-3 px-4">Delivered</th>
                       <th className="text-right py-3 px-4">Delivery %</th>
@@ -703,15 +674,24 @@ const Index = () => {
                           <p className="text-sm font-medium">{product.Category}</p>
                           <p className="text-[10px] text-muted-foreground">{product.Subcategory}</p>
                         </td>
+                        <td className="py-3 px-4 text-sm">{product.Supplier}</td>
+                        <td className="py-3 px-4 text-center">
+                          <span className={cn(
+                            "inline-block px-2 py-1 rounded-full text-[10px] font-semibold",
+                            product.ProductStatus === "Active" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
+                          )}>
+                            {product.ProductStatus}
+                          </span>
+                        </td>
                         <td className="py-3 px-4 text-right font-semibold text-sm">{product.TotalOrders}</td>
                         <td className="py-3 px-4 text-right font-semibold text-sm text-success">{product.DeliveredOrders}</td>
                         <td className="py-3 px-4 text-right">
                           <div className={cn(
                             "inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-semibold",
-                            product.DeliveryPercentile >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentile >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                            product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                           )}>
                             <Truck className="w-3 h-3" />
-                            {product.DeliveryPercentile.toFixed(1)}%
+                            {product.DeliveryPercentage.toFixed(1)}%
                           </div>
                         </td>
                       </tr>
@@ -723,171 +703,21 @@ const Index = () => {
           )}
         </div>
 
-        {/* PROFIT BANDS TABLE */}
-        <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
-          <div className="p-4 border-b border-border">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-              <div>
-                <h3 className="font-bold text-foreground flex items-center gap-2">
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                  Profit Bands Analysis
-                </h3>
-                <p className="text-xs text-muted-foreground">Performance by profit margin for {selectedDateLabel}</p>
-              </div>
-            </div>
-          </div>
-          
-          {/* Mobile Card View */}
-          <div className="block md:hidden space-y-3 p-4">
-            {profitBandsData[dateRange]?.map((band, index) => (
-              <div key={band.band} className="bg-muted/30 rounded-xl p-4 border border-border/50">
-                <div className="flex items-center justify-between mb-3">
-                  <span className={cn(
-                    "px-3 py-1 rounded-full text-xs font-bold",
-                    index === 0 && "bg-destructive/10 text-destructive",
-                    index === 1 && "bg-warning/10 text-warning",
-                    index === 2 && "bg-info/10 text-info",
-                    index === 3 && "bg-success/10 text-success"
-                  )}>
-                    {band.band}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-success font-semibold">{band.delivered} delivered</span>
-                    <span className="text-xs text-destructive">{band.returnedLost} lost</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Reseller Pay</p>
-                    <p className="text-sm font-semibold">Rs {band.resellerPay.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Earned</p>
-                    <p className="text-sm font-semibold text-success">Rs {band.moneyEarned.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Potential</p>
-                    <p className="text-sm font-semibold text-primary">Rs {band.potentialEarnings.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Desktop Table View */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                  <th className="text-left py-3 px-4">Profit Band</th>
-                  <th className="text-right py-3 px-4">Reseller Pay</th>
-                  <th className="text-right py-3 px-4">Money Earned</th>
-                  <th className="text-right py-3 px-4">Potential Earnings</th>
-                  <th className="text-right py-3 px-4">Delivered</th>
-                  <th className="text-right py-3 px-4">Returned & Lost</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {profitBandsData[dateRange]?.map((band, index) => (
-                  <tr key={band.band} className="hover:bg-muted/30 transition-colors">
-                    <td className="py-3 px-4">
-                      <span className={cn(
-                        "px-3 py-1.5 rounded-full text-xs font-bold",
-                        index === 0 && "bg-destructive/10 text-destructive",
-                        index === 1 && "bg-warning/10 text-warning",
-                        index === 2 && "bg-info/10 text-info",
-                        index === 3 && "bg-success/10 text-success"
-                      )}>
-                        {band.band}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right font-semibold text-sm">Rs {band.resellerPay.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right font-semibold text-sm text-success">Rs {band.moneyEarned.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right font-semibold text-sm text-primary">Rs {band.potentialEarnings.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right font-semibold text-sm text-success">{band.delivered.toLocaleString()}</td>
-                    <td className="py-3 px-4 text-right font-semibold text-sm text-destructive">{band.returnedLost.toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* ROW 6: RECENT ORDERS - With Coming Soon Overlay */}
+        {/* ROW 7: RECENT ORDERS - With Coming Soon Overlay */}
         <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden relative">
-          {/* Blurred Background Content */}
-          <div className="blur-sm pointer-events-none select-none">
-            <div className="p-4 border-b border-border">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-foreground">Recent Orders</h3>
-                <span className="text-xs text-muted-foreground">{filteredOrders.length} orders</span>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {orderFilters.map((filter) => (
-                  <button
-                    key={filter.id}
-                    className={cn(
-                      "px-2.5 py-1.5 rounded-full text-[10px] font-semibold transition-all",
-                      orderFilter === filter.id
-                        ? "bg-foreground text-background"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    )}
-                  >
-                    {filter.label} <span className="opacity-70">{filter.count}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="divide-y divide-border/50 max-h-[300px] overflow-y-auto">
-              {filteredOrders.map((order) => {
-                const status = statusConfig[order.status];
-                const StatusIcon = status?.icon || CheckCircle2;
-                return (
-                  <div key={order.id} className="flex items-center gap-3 px-4 py-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                      <span className="text-xs font-bold text-primary">{order.customer[0]}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-sm text-foreground">{order.customer}</p>
-                        <span className={cn("flex items-center gap-0.5 text-[10px] font-medium", status?.color)}>
-                          <StatusIcon className="w-3 h-3" />
-                          {status?.label}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{order.id} · {order.date}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-sm">Rs {order.amount.toLocaleString()}</p>
-                      <span className="text-xs font-semibold text-primary">+Rs {order.profit}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            
-            <div className="p-3 border-t border-border bg-muted/30">
-              <button className="w-full py-2 text-sm font-semibold text-primary hover:bg-primary/10 rounded-lg transition-colors">
-                View All Orders →
-              </button>
-            </div>
-          </div>
-
           {/* Coming Soon Overlay */}
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex items-center justify-center bg-background/80 backdrop-blur-sm py-20">
             <div className="text-center p-8">
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                 <Clock className="w-10 h-10 text-primary" />
               </div>
               <h3 className="text-2xl font-bold text-foreground mb-2">Coming Soon</h3>
               <p className="text-sm text-muted-foreground max-w-md">
-                Recent orders tracking abhi development mein hai. Jald real-time order updates ke liye wapas aayein!
+                Recent orders tracking is currently under development. Check back soon for real-time order updates!
               </p>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
