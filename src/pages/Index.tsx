@@ -193,14 +193,15 @@ const Index = () => {
     : "0.0";
 
   // Prepare order status data (mock for now, can be calculated from sheet data if available)
+  const avgOrders = currentPeriodData?.avg_orders ?? 0;
   const orderStatusData = [
-    { name: "Delivered", value: currentPeriodData ? Math.round(currentPeriodData.avg_orders * 0.71) : 0, color: "hsl(152, 69%, 45%)" },
-    { name: "In Transit", value: currentPeriodData ? Math.round(currentPeriodData.avg_orders * 0.15) : 0, color: "hsl(210, 90%, 55%)" },
-    { name: "Pending", value: currentPeriodData?.pending_orders || 0, color: "hsl(38, 92%, 50%)" },
-    { name: "Cancelled", value: currentPeriodData ? Math.round(currentPeriodData.avg_orders * 0.03) : 0, color: "hsl(0, 72%, 51%)" },
+    { name: "Delivered", value: Math.round(avgOrders * 0.71) || 0, color: "hsl(152, 69%, 45%)" },
+    { name: "In Transit", value: Math.round(avgOrders * 0.15) || 0, color: "hsl(210, 90%, 55%)" },
+    { name: "Pending", value: currentPeriodData?.pending_orders ?? 0, color: "hsl(38, 92%, 50%)" },
+    { name: "Cancelled", value: Math.round(avgOrders * 0.03) || 0, color: "hsl(0, 72%, 51%)" },
   ];
 
-  const totalOrdersForPie = orderStatusData.reduce((sum, item) => sum + item.value, 0);
+  const totalOrdersForPie = orderStatusData.reduce((sum, item) => sum + (item.value || 0), 0);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
