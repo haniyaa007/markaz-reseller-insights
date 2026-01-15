@@ -615,7 +615,7 @@ const Index = () => {
                     
                     return (
                       <tr key={index} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 w-12">
                           <span className={cn(
                             "inline-block px-2 py-1 rounded-full text-xs font-semibold",
                             band.profit_band === "0-40%" && "bg-destructive/10 text-destructive",
@@ -700,20 +700,18 @@ const Index = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                      <th className="text-left py-3 px-4">Rank</th>
-                      <th className="text-left py-3 px-4">Product</th>
-                      <th className="text-left py-3 px-4">Category</th>
-                      <th className="text-left py-3 px-4">Supplier</th>
-                      <th className="text-center py-3 px-4">Status</th>
-                      <th className="text-right py-3 px-4">Total Orders</th>
-                      <th className="text-right py-3 px-4">Delivered</th>
-                      <th className="text-right py-3 px-4">Delivery %</th>
+                      <th className="text-left py-3 px-4 w-12">Rank</th>
+                      <th className="text-left py-3 px-4 w-3/5">Product</th>
+                      <th className="text-left py-3 px-4 w-1/6">Category</th>
+                      <th className="text-right py-3 px-4 w-24">Total Orders</th>
+                      <th className="text-right py-3 px-4 w-24">Delivered</th>
+                      <th className="text-right py-3 px-4 w-28">Delivery %</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
                     {filteredProducts.map((product, index) => (
                       <tr key={product.ProductCode} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 w-3/5">
                           <div className={cn(
                             "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
                             index === 0 && "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white",
@@ -724,7 +722,7 @@ const Index = () => {
                             {index + 1}
                           </div>
                         </td>
-                        <td className="py-3 px-4">
+                        <td className="py-3 px-4 w-1/6">
                           <p className="font-semibold text-sm text-foreground max-w-xs">{product.Product}</p>
                           <p className="text-[10px] text-muted-foreground">{product.ProductCode}</p>
                         </td>
@@ -732,18 +730,9 @@ const Index = () => {
                           <p className="text-sm font-medium">{product.Category}</p>
                           <p className="text-[10px] text-muted-foreground">{product.Subcategory}</p>
                         </td>
-                        <td className="py-3 px-4 text-sm">{product.Supplier}</td>
-                        <td className="py-3 px-4 text-center">
-                          <span className={cn(
-                            "inline-block px-2 py-1 rounded-full text-[10px] font-semibold",
-                            product.ProductStatus === "Active" ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"
-                          )}>
-                            {product.ProductStatus}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 text-right font-semibold text-sm">{product.TotalOrders}</td>
-                        <td className="py-3 px-4 text-right font-semibold text-sm text-success">{product.DeliveredOrders}</td>
-                        <td className="py-3 px-4 text-right">
+                        <td className="py-3 px-4 text-right font-semibold text-sm w-24">{product.TotalOrders}</td>
+                        <td className="py-3 px-4 text-right font-semibold text-sm text-success w-24">{product.DeliveredOrders}</td>
+                        <td className="py-3 px-4 text-right w-28">
                           <div className={cn(
                             "inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-semibold",
                             product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
