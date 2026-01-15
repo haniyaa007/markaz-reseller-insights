@@ -137,30 +137,45 @@ async function fetchAllData(): Promise<any> {
     }
 
     // The API returns all data in a single response
-    const url = GOOGLE_SHEET_URL;
+    // Adding cache-busting timestamp to avoid browser caching
+    const timestamp = Date.now();
+    const url = `${GOOGLE_SHEET_URL}?_=${timestamp}`;
     console.log(`Fetching all data from: ${url}`);
     
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-      },
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      console.log('Fetch response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const text = await response.text();
+      console.log('Raw response length:', text.length);
+      
+      const result = JSON.parse(text);
+      console.log('API Response keys:', Object.keys(result));
+      
+      if (result.success) {
+        // Cache the result
+        cachedData = { data: result, timestamp: Date.now() };
+        return result;
+      }
+      
+      throw new Error('API returned success: false');
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      throw fetchError;
     }
-    
-    const result = await response.json();
-    console.log('API Response:', result);
-    
-    if (result.success) {
-      // Cache the result
-      cachedData = { data: result, timestamp: Date.now() };
-      return result;
-    }
-    
-    throw new Error('API returned success: false');
   } catch (error) {
     console.error('Error fetching data:', error);
     return null;
@@ -307,10 +322,11 @@ export async function fetchSheetData(): Promise<SheetData> {
     console.log('Raw data received:', apiData);
 
     // Extract data from the API response - the API returns all data in a single response
+    // Note: API uses camelCase keys like orderVsRevenueChart, deliveryPerformanceCity, deliveryPerformanceCourier
     const basicsRaw = apiData.basics || [];
-    const orderRevenueRaw = apiData.ordervsrevenuechart || apiData.orderRevenueChart || [];
-    const deliveryCourierRaw = apiData.deliveryperformancecourier || apiData.deliveryPerformanceCourier || [];
-    const deliveryCityRaw = apiData.deliveryperformancecity || apiData.deliveryPerformanceCity || [];
+    const orderRevenueRaw = apiData.orderVsRevenueChart || apiData.ordervsrevenuechart || [];
+    const deliveryCourierRaw = apiData.deliveryPerformanceCourier || apiData.deliveryperformancecourier || [];
+    const deliveryCityRaw = apiData.deliveryPerformanceCity || apiData.deliveryperformancecity || [];
     const profitBandRaw = apiData.profitband || apiData.profitBand || [];
     const topProductsRaw = apiData.topProducts || apiData.topproducts || [];
 

@@ -1,3 +1,4 @@
+// Analytics Dashboard - Updated 2026-01-15
 import { useState, useEffect } from "react";
 import { 
   Wallet, TrendingUp, Clock, ShoppingBag, Users,
