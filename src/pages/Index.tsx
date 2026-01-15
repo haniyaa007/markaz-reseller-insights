@@ -150,10 +150,16 @@ const Index = () => {
   // Fetch data from Google Sheets
   useEffect(() => {
     const loadData = async () => {
-      setLoadingData(true);
-      const data = await fetchSheetData();
-      setSheetData(data);
-      setLoadingData(false);
+      try {
+        setLoadingData(true);
+        const data = await fetchSheetData();
+        console.log('Sheet data loaded:', data);
+        setSheetData(data);
+      } catch (error) {
+        console.error('Failed to load data:', error);
+      } finally {
+        setLoadingData(false);
+      }
     };
     loadData();
   }, []);

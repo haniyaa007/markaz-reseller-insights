@@ -123,24 +123,46 @@ export const productPeriodMapping: Record<string, string> = {
   "ALL_TIME": "ALL_TIME"
 };
 
-// Fetch data from specific sheet
-async function fetchFromSheet(sheetName: string): Promise<any> {
+// Cache for API data (5 minutes)
+let cachedData: { data: any; timestamp: number } | null = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+// Fetch all data from Google Sheets API (single request that returns all data)
+async function fetchAllData(): Promise<any> {
   try {
-    const url = `${GOOGLE_SHEET_URL}?sheet=${sheetName}`;
+    // Check cache first
+    if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
+      console.log('Using cached data');
+      return cachedData.data;
+    }
+
+    // The API returns all data in a single response
+    const url = GOOGLE_SHEET_URL;
+    console.log(`Fetching all data from: ${url}`);
     
-    console.log(`Fetching from: ${url}`);
-    const response = await fetch(url);
-    const result = await response.json();
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
     
-    console.log(`Response from ${sheetName}:`, result);
-    
-    if (result.success) {
-      return result[sheetName] || result.data || null;
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
     
-    throw new Error(`Failed to fetch data from ${sheetName} sheet`);
+    const result = await response.json();
+    console.log('API Response:', result);
+    
+    if (result.success) {
+      // Cache the result
+      cachedData = { data: result, timestamp: Date.now() };
+      return result;
+    }
+    
+    throw new Error('API returned success: false');
   } catch (error) {
-    console.error(`Error fetching ${sheetName} data:`, error);
+    console.error('Error fetching data:', error);
     return null;
   }
 }
@@ -275,23 +297,22 @@ function convertTopProducts(apiData: any[]): TopProduct[] {
 // Main function to fetch all sheet data
 export async function fetchSheetData(): Promise<SheetData> {
   try {
-    const [basicsRaw, orderRevenueRaw, deliveryCourierRaw, deliveryCityRaw, profitBandRaw, topProductsRaw] = await Promise.all([
-      fetchFromSheet('basics'),
-      fetchFromSheet('ordervsrevenuechart'),
-      fetchFromSheet('deliveryperformancecourier'),
-      fetchFromSheet('deliveryperformancecity'),
-      fetchFromSheet('profitband'),
-      fetchFromSheet('topproducts')
-    ]);
+    const apiData = await fetchAllData();
+    
+    if (!apiData) {
+      console.error('No data received from API');
+      return getDefaultSheetData();
+    }
 
-    console.log('Raw data received:', {
-      basics: basicsRaw,
-      orderRevenue: orderRevenueRaw,
-      deliveryCourier: deliveryCourierRaw,
-      deliveryCity: deliveryCityRaw,
-      profitBand: profitBandRaw,
-      topProducts: topProductsRaw
-    });
+    console.log('Raw data received:', apiData);
+
+    // Extract data from the API response - the API returns all data in a single response
+    const basicsRaw = apiData.basics || [];
+    const orderRevenueRaw = apiData.ordervsrevenuechart || apiData.orderRevenueChart || [];
+    const deliveryCourierRaw = apiData.deliveryperformancecourier || apiData.deliveryPerformanceCourier || [];
+    const deliveryCityRaw = apiData.deliveryperformancecity || apiData.deliveryPerformanceCity || [];
+    const profitBandRaw = apiData.profitband || apiData.profitBand || [];
+    const topProductsRaw = apiData.topProducts || apiData.topproducts || [];
 
     return {
       basics: convertBasicsData(basicsRaw),
