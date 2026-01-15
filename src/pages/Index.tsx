@@ -700,18 +700,18 @@ const Index = () => {
                 <table className="w-full">
                   <thead>
                     <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                      <th className="text-left py-3 px-4 w-12">Rank</th>
-                      <th className="text-left py-3 px-4 w-1/2">Product</th>
-                      <th className="text-left py-3 px-4 w-1/6">Category</th>
-                      <th className="text-right py-3 px-4 w-28">Total Orders</th>
-                      <th className="text-right py-3 px-4 w-28">Delivered</th>
-                      <th className="text-right py-3 px-4 w-28">Delivery %</th>
+                      <th className="text-left py-3 px-4">Rank</th>
+                      <th className="text-left py-3 px-4">Product</th>
+                      <th className="text-left py-3 px-4">Category</th>
+                      <th className="text-right py-3 px-4">Total Orders</th>
+                      <th className="text-right py-3 px-4">Delivered</th>
+                      <th className="text-right py-3 px-4">Delivery %</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
                     {filteredProducts.map((product, index) => (
                       <tr key={product.ProductCode} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-3 px-4 w-12">
+                        <td className="py-3 px-4">
                           <div className={cn(
                             "w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold",
                             index === 0 && "bg-gradient-to-br from-yellow-400 to-yellow-600 text-white",
@@ -722,17 +722,17 @@ const Index = () => {
                             {index + 1}
                           </div>
                         </td>
-                        <td className="py-3 px-4 w-1/2 pr-6">
+                        <td className="py-3 px-4 pr-6">
                           <p className="font-semibold text-sm text-foreground">{product.Product}</p>
                           <p className="text-[10px] text-muted-foreground">{product.ProductCode}</p>
                         </td>
-                        <td className="py-3 px-4 w-1/6">
+                        <td className="py-3 px-4">
                           <p className="text-sm font-medium">{product.Category}</p>
                           <p className="text-[10px] text-muted-foreground">{product.Subcategory}</p>
                         </td>
-                        <td className="py-3 px-4 text-right font-semibold text-sm w-28">{product.TotalOrders}</td>
-                        <td className="py-3 px-4 text-right font-semibold text-sm text-success w-28">{product.DeliveredOrders}</td>
-                        <td className="py-3 px-4 text-right w-28">
+                        <td className="py-3 px-4 text-right font-semibold text-sm">{product.TotalOrders}</td>
+                        <td className="py-3 px-4 text-right font-semibold text-sm text-success">{product.DeliveredOrders}</td>
+                        <td className="py-3 px-4 text-right">
                           <div className={cn(
                             "inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-semibold",
                             product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
