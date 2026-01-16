@@ -1,4 +1,4 @@
-// Analytics Dashboard - Updated 2026-01-15
+// Analytics Dashboard - Updated 2026-01-16
 import { useState, useEffect } from "react";
 import { 
   Wallet, TrendingUp, Clock, ShoppingBag, Users,
@@ -24,6 +24,7 @@ import {
   findPeriodData,
   periodMapping
 } from "@/lib/googlesheet";
+import { generateAnalyticsPDF } from "@/lib/pdfExport";
 
 // Metric Definitions
 const metricDefinitions: Record<string, { title: string; description: string }> = {
@@ -262,7 +263,22 @@ const Index = () => {
               <RefreshCw className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             </button>
             
-            <button className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl gradient-hero text-primary-foreground text-xs sm:text-sm font-semibold shadow-glow hover:opacity-90 transition-all">
+            <button 
+              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl gradient-hero text-primary-foreground text-xs sm:text-sm font-semibold shadow-glow hover:opacity-90 transition-all"
+              onClick={() => {
+                if (sheetData && currentPeriodData) {
+                  generateAnalyticsPDF({
+                    sheetData,
+                    currentPeriodData,
+                    dateRangeLabel: selectedDateLabel || '30 Days',
+                    deliveryDataPartners,
+                    deliveryDataCities,
+                    filteredProducts,
+                  });
+                }
+              }}
+              disabled={loadingData || !sheetData}
+            >
               <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Export</span>
             </button>
