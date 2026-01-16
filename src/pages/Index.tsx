@@ -28,24 +28,24 @@ import {
 // Metric Definitions
 const metricDefinitions: Record<string, { title: string; description: string }> = {
   revenue: {
-    title: "Total Revenue",
-    description: "The total amount of money generated from all sales before any deductions like costs, commissions, or returns."
+    title: "Total Sales",
+    description: "Aapki tamam sales se hasil hone wali kul raqam, kisi bhi kharche ya wapsi ke baghair."
   },
   profit: {
-    title: "Profit Earned",
-    description: "Your net earnings after deducting product costs and platform fees from total revenue."
+    title: "Kamai",
+    description: "Product ki laagat aur platform fees nikalne ke baad aapki khalis kamai."
   },
   orders: {
-    title: "Total Orders",
-    description: "The complete count of all orders placed within the selected time period, regardless of status."
+    title: "Kul Orders",
+    description: "Chuni hui muddat mein diye gaye tamam orders ki ginti, chahe unki halat kuch bhi ho."
   },
   pending: {
     title: "Pending Orders",
-    description: "Orders that have been placed but not yet shipped or processed. Lower numbers indicate efficient order fulfillment."
+    description: "Woh orders jo abhi ship ya process nahi hue. Kam number ka matlab hai behtareen order fulfillment."
   },
   customers: {
     title: "Customers",
-    description: "Unique buyers who have made at least one purchase. Higher numbers indicate growing market reach."
+    description: "Woh unique kharidaar jinohne kam az kam aik kharidaari ki. Zyada numbers ka matlab hai market reach barh rahi hai."
   }
 };
 
@@ -114,9 +114,9 @@ const DeliveryTooltip = ({ active, payload }: any) => {
     return (
       <div className="bg-card border border-border rounded-xl p-3 shadow-xl">
         <p className="text-sm font-bold text-foreground">{data.name}</p>
-        <p className="text-lg font-bold" style={{ color: data.color }}>{data.percentage}%</p>
+        <p className="text-lg font-bold" style={{ color: data.color }}>{Math.round(data.percentage)}%</p>
         <div className="text-xs text-muted-foreground mt-1">
-          <p>{data.delivered} of {data.total} delivered</p>
+          <p>Success Rate: {Math.round(data.percentage)}%</p>
         </div>
       </div>
     );
@@ -199,8 +199,8 @@ const Index = () => {
 
   const deliveryData = deliveryView === "partners" ? deliveryDataPartners : deliveryDataCities;
   const avgDelivery = deliveryData.length > 0 
-    ? (deliveryData.reduce((sum, d) => sum + d.percentage, 0) / deliveryData.length).toFixed(1)
-    : "0.0";
+    ? Math.round(deliveryData.reduce((sum, d) => sum + d.percentage, 0) / deliveryData.length)
+    : 0;
 
   // Prepare order status data (mock for now, can be calculated from sheet data if available)
   const avgOrders = currentPeriodData?.avg_orders ?? 0;
@@ -279,7 +279,7 @@ const Index = () => {
               <div className="relative">
                 <div className="flex items-center justify-between">
                   <p className="text-xs sm:text-sm font-medium opacity-80 flex items-center gap-1.5">
-                    Total Revenue
+                    Total Sales
                     <Info className="w-3 h-3 sm:w-3.5 sm:h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
                   </p>
                   <Wallet className="w-4 h-4 sm:w-5 sm:h-5 opacity-80" />
@@ -351,7 +351,7 @@ const Index = () => {
             <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
               <div className="text-center">
                 <Clock className="w-6 h-6 text-warning mx-auto mb-1" />
-                <p className="text-xs font-semibold text-foreground">Jaldi Aa Raha Hai</p>
+                <p className="text-xs font-semibold text-foreground">Jald Aa Raha Hai</p>
               </div>
             </div>
           </div>
@@ -466,7 +466,7 @@ const Index = () => {
                   <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                     <Clock className="w-6 h-6 text-primary" />
                   </div>
-                  <p className="text-sm font-bold text-foreground">Jaldi Aa Raha Hai</p>
+                  <p className="text-sm font-bold text-foreground">Jald Aa Raha Hai</p>
                   <p className="text-[10px] text-muted-foreground mt-0.5">Order status tracking</p>
                 </div>
               </div>
@@ -505,7 +505,7 @@ const Index = () => {
               </div>
               <div className="flex items-center gap-2 mb-3">
                 <p className="text-2xl font-bold text-primary">{avgDelivery}%</p>
-                <span className="text-xs text-success font-semibold">Avg. Success</span>
+                <span className="text-xs text-success font-semibold">Ausat Kamiyabi</span>
               </div>
               {loadingData || deliveryData.length === 0 ? (
                 <div className="flex items-center justify-center h-[140px]">
@@ -534,16 +534,16 @@ const Index = () => {
           <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
             <div className="p-4 border-b border-border">
               <h3 className="font-bold text-foreground">Profit Bands Analysis</h3>
-              <p className="text-xs text-muted-foreground">Performance by profit margin for {selectedDateLabel}</p>
+              <p className="text-xs text-muted-foreground">Har order ke hisab se profit margin ka performance - {selectedDateLabel}</p>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="bg-muted/50 text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                    <th className="text-left py-3 px-4">Profit Band</th>
-                    <th className="text-right py-3 px-4">Reseller Pay</th>
-                    <th className="text-right py-3 px-4">Money Earned</th>
-                    <th className="text-right py-3 px-4">Potential Earnings</th>
+                    <th className="text-left py-3 px-4 whitespace-nowrap">Profit Band</th>
+                    <th className="text-right py-3 px-4 whitespace-nowrap">Reseller Pay (Per Order)</th>
+                    <th className="text-right py-3 px-4 whitespace-nowrap">Money Earned (Per Order)</th>
+                    <th className="text-right py-3 px-4 whitespace-nowrap">Potential Earnings (Per Order)</th>
                     <th className="text-right py-3 px-4">Delivered</th>
                     <th className="text-right py-3 px-4">Returned & Lost</th>
                   </tr>
@@ -615,9 +615,9 @@ const Index = () => {
                     
                     return (
                       <tr key={index} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-3 px-4 w-12">
+                        <td className="py-3 px-4">
                           <span className={cn(
-                            "inline-block px-2 py-1 rounded-full text-xs font-semibold",
+                            "inline-block px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap",
                             band.profit_band === "0-40%" && "bg-destructive/10 text-destructive",
                             band.profit_band === "40-80%" && "bg-warning/10 text-warning",
                             band.profit_band === "80-100%" && "bg-info/10 text-info",
@@ -644,8 +644,8 @@ const Index = () => {
         <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
           <div className="p-4 border-b border-border">
             <div>
-              <h3 className="font-bold text-foreground">Top Selling Products</h3>
-              <p className="text-xs text-muted-foreground">Sorted by Delivery % for {selectedDateLabel}</p>
+              <h3 className="font-bold text-foreground">Sabse Zyada Bikne Wale Products</h3>
+              <p className="text-xs text-muted-foreground">Delivery Percentile ke hisab se - {selectedDateLabel}</p>
             </div>
           </div>
 
@@ -657,7 +657,7 @@ const Index = () => {
           ) : filteredProducts.length === 0 ? (
             <div className="p-8 text-center">
               <Package className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No products found for this period</p>
+              <p className="text-sm text-muted-foreground">Is muddat mein koi product nahi mila</p>
             </div>
           ) : (
             <>
@@ -679,16 +679,15 @@ const Index = () => {
                         <p className="font-semibold text-sm text-foreground line-clamp-2">{product.Product}</p>
                         <p className="text-[10px] text-muted-foreground">{product.Category} · {product.Subcategory}</p>
                         <div className="flex items-center gap-3 mt-2 flex-wrap">
-                          <span className="text-xs text-muted-foreground">{product.TotalOrders} orders</span>
-                          <span className="text-xs text-success font-semibold">{product.DeliveredOrders} delivered</span>
+                          <span className="text-xs text-muted-foreground">{product.TotalOrders.toLocaleString()} orders</span>
                         </div>
                       </div>
                       <div className={cn(
                         "px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1",
-                        product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                        product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 70 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                       )}>
                         <Truck className="w-3 h-3" />
-                        {product.DeliveryPercentage.toFixed(1)}%
+                        P{Math.round(product.DeliveryPercentage)}
                       </div>
                     </div>
                   </div>
@@ -704,8 +703,7 @@ const Index = () => {
                       <th className="text-left py-3 px-4">Product</th>
                       <th className="text-left py-3 px-4">Category</th>
                       <th className="text-right py-3 px-4">Total Orders</th>
-                      <th className="text-right py-3 px-4">Delivered</th>
-                      <th className="text-right py-3 px-4">Delivery %</th>
+                      <th className="text-right py-3 px-4">Delivery Percentile</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/50">
@@ -730,15 +728,14 @@ const Index = () => {
                           <p className="text-sm font-medium">{product.Category}</p>
                           <p className="text-[10px] text-muted-foreground">{product.Subcategory}</p>
                         </td>
-                        <td className="py-3 px-4 text-right font-semibold text-sm">{product.TotalOrders}</td>
-                        <td className="py-3 px-4 text-right font-semibold text-sm text-success">{product.DeliveredOrders}</td>
+                        <td className="py-3 px-4 text-right font-semibold text-sm">{product.TotalOrders.toLocaleString()}</td>
                         <td className="py-3 px-4 text-right">
                           <div className={cn(
                             "inline-flex items-center gap-0.5 px-2 py-1 rounded-full text-xs font-semibold",
-                            product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 80 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
+                            product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 70 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                           )}>
                             <Truck className="w-3 h-3" />
-                            {product.DeliveryPercentage.toFixed(1)}%
+                            P{Math.round(product.DeliveryPercentage)}
                           </div>
                         </td>
                       </tr>
@@ -758,9 +755,9 @@ const Index = () => {
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
                 <Clock className="w-10 h-10 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold text-foreground mb-2">Coming Soon</h3>
+              <h3 className="text-2xl font-bold text-foreground mb-2">Jald Aa Raha Hai</h3>
               <p className="text-sm text-muted-foreground max-w-md">
-                Recent orders tracking is currently under development. Check back soon for real-time order updates!
+                Recent orders tracking abhi development mein hai. Jald real-time order updates ke liye wapas aayein!
               </p>
             </div>
           </div>
