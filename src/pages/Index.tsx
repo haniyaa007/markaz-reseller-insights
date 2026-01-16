@@ -505,7 +505,7 @@ const Index = () => {
               </div>
               <div className="flex items-center gap-2 mb-3">
                 <p className="text-2xl font-bold text-primary">{avgDelivery}%</p>
-                <span className="text-xs text-success font-semibold">Ausat Kamiyabi</span>
+                <span className="text-xs text-success font-semibold">Avg. Success</span>
               </div>
               {loadingData || deliveryData.length === 0 ? (
                 <div className="flex items-center justify-center h-[140px]">
