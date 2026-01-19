@@ -55,7 +55,7 @@ export const generateAnalyticsPDF = (data: ExportData) => {
   yPos = 60;
   
   // Key Metrics Section
-  addSectionHeader('📊 Key Performance Metrics');
+  addSectionHeader('Key Performance Metrics');
   
   const metricsData = [
     ['Metric', 'Value'],
@@ -92,7 +92,7 @@ export const generateAnalyticsPDF = (data: ExportData) => {
   yPos = (doc as any).lastAutoTable.finalY + 15;
   
   // Delivery Performance - Partners
-  addSectionHeader('🚚 Delivery Performance by Partners');
+  addSectionHeader('Delivery Performance by Partners');
   
   const partnerData = [
     ['Partner', 'Success Rate'],
@@ -126,7 +126,7 @@ export const generateAnalyticsPDF = (data: ExportData) => {
   yPos = (doc as any).lastAutoTable.finalY + 15;
   
   // Delivery Performance - Cities
-  addSectionHeader('🏙️ Delivery Performance by Cities');
+  addSectionHeader('Delivery Performance by Cities');
   
   const cityData = [
     ['City', 'Success Rate'],
@@ -166,12 +166,12 @@ export const generateAnalyticsPDF = (data: ExportData) => {
   }
   
   // Top Products Section
-  addSectionHeader('🏆 Top Selling Products');
+  addSectionHeader('Top Selling Products');
   
   const productTableData = [
     ['Product', 'Category', 'Orders', 'Delivery Percentile'],
     ...filteredProducts.slice(0, 10).map(p => [
-      p.Product.length > 35 ? p.Product.substring(0, 35) + '...' : p.Product,
+      p.Product,
       p.Category,
       p.TotalOrders.toLocaleString(),
       `P${Math.round(p.DeliveryPercentage)}`
@@ -197,10 +197,10 @@ export const generateAnalyticsPDF = (data: ExportData) => {
       fillColor: [255, 251, 235],
     },
     columnStyles: {
-      0: { cellWidth: 65 },
-      1: { cellWidth: 40 },
+      0: { cellWidth: 80 },
+      1: { cellWidth: 35 },
       2: { halign: 'right', cellWidth: 25 },
-      3: { halign: 'center', cellWidth: 35 },
+      3: { halign: 'center', cellWidth: 30 },
     },
   });
   
@@ -214,7 +214,7 @@ export const generateAnalyticsPDF = (data: ExportData) => {
   
   // Profit Bands Analysis
   if (sheetData.profitBand && sheetData.profitBand.length > 0) {
-    addSectionHeader('💰 Profit Bands Analysis (Per Order)');
+    addSectionHeader('Profit Bands Analysis (Per Order)');
     
     const profitBandData = [
       ['Profit Band', 'Reseller Pay', 'Money Earned', 'Potential Earnings', 'Delivered'],
@@ -264,7 +264,7 @@ export const generateAnalyticsPDF = (data: ExportData) => {
       yPos = 20;
     }
     
-    addSectionHeader('📈 Monthly Sales & Orders Trend');
+    addSectionHeader('Monthly Sales & Orders Trend');
     
     const revenueData = [
       ['Month', 'Total Orders', 'Total Revenue'],
