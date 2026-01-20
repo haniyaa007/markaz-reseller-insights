@@ -19,11 +19,11 @@ export const generateAnalyticsPDF = (data: ExportData) => {
   const margin = 20;
   let yPos = 20;
   
-  // Colors
-  const primaryColor: [number, number, number] = [99, 102, 241]; // Indigo
-  const textDark: [number, number, number] = [30, 41, 59];
-  const textMuted: [number, number, number] = [100, 116, 139];
-  const successColor: [number, number, number] = [34, 197, 94];
+  // Colors - Markaz Brand (#02BC87, #070A56)
+  const primaryColor: [number, number, number] = [2, 188, 135]; // #02BC87
+  const textDark: [number, number, number] = [7, 10, 86]; // #070A56
+  const textMuted: [number, number, number] = [87, 122, 112]; // #577A70
+  const successColor: [number, number, number] = [2, 188, 135]; // #02BC87
   
   // Helper functions
   const addSectionHeader = (text: string) => {
@@ -40,7 +40,7 @@ export const generateAnalyticsPDF = (data: ExportData) => {
   };
   
   // Header Section
-  doc.setFillColor(99, 102, 241);
+  doc.setFillColor(2, 188, 135); // #02BC87
   doc.rect(0, 0, pageWidth, 45, 'F');
   
   doc.setFontSize(22);
@@ -170,15 +170,15 @@ export const generateAnalyticsPDF = (data: ExportData) => {
   }
   
   // Top Products Section
-  addSectionHeader('Top Selling Products');
+  addSectionHeader('Top Products');
   
   const productTableData = [
-    ['Product', 'Category', 'Orders', 'Delivery Percentile'],
+    ['Product', 'Category', 'Orders', 'Delivery Success'],
     ...filteredProducts.slice(0, 10).map(p => [
       p.Product,
       p.Category,
       p.TotalOrders.toLocaleString(),
-      `P${Math.round(p.DeliveryPercentage)}`
+      `${Math.round(p.DeliveryPercentage)}%`
     ])
   ];
   
@@ -188,7 +188,7 @@ export const generateAnalyticsPDF = (data: ExportData) => {
     body: productTableData.slice(1),
     margin: { left: margin, right: margin },
     headStyles: {
-      fillColor: [245, 158, 11],
+      fillColor: [84, 148, 113], // #549471
       textColor: [255, 255, 255],
       fontStyle: 'bold',
       fontSize: 9,
@@ -198,7 +198,7 @@ export const generateAnalyticsPDF = (data: ExportData) => {
       textColor: textDark,
     },
     alternateRowStyles: {
-      fillColor: [255, 251, 235],
+      fillColor: [240, 253, 244],
     },
     columnStyles: {
       0: { cellWidth: 80 },

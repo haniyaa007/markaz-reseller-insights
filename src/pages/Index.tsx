@@ -187,7 +187,7 @@ const Index = () => {
     delivered: item.successful_deliveries,
     total: item.total_orders,
     percentage: (item.success_rate * 100),
-    color: ["hsl(152, 69%, 45%)", "hsl(210, 90%, 55%)", "hsl(38, 92%, 50%)", "hsl(280, 65%, 55%)"][idx % 4]
+    color: ["hsl(161, 97%, 37%)", "hsl(148, 27%, 45%)", "hsl(92, 35%, 51%)", "hsl(162, 16%, 41%)"][idx % 4]
   })) || [];
 
   const deliveryDataCities = sheetData?.deliveryPerformanceCity.map((item, idx) => ({
@@ -195,7 +195,7 @@ const Index = () => {
     delivered: item.successful_deliveries,
     total: item.total_orders,
     percentage: (item.success_rate * 100),
-    color: ["hsl(152, 69%, 45%)", "hsl(210, 90%, 55%)", "hsl(38, 92%, 50%)", "hsl(280, 65%, 55%)"][idx % 4]
+    color: ["hsl(161, 97%, 37%)", "hsl(148, 27%, 45%)", "hsl(92, 35%, 51%)", "hsl(162, 16%, 41%)"][idx % 4]
   })) || [];
 
   const deliveryData = deliveryView === "partners" ? deliveryDataPartners : deliveryDataCities;
@@ -206,8 +206,8 @@ const Index = () => {
   // Prepare order status data (mock for now, can be calculated from sheet data if available)
   const avgOrders = currentPeriodData?.avg_orders ?? 0;
   const orderStatusData = [
-    { name: "Delivered", value: Math.round(avgOrders * 0.71) || 0, color: "hsl(152, 69%, 45%)" },
-    { name: "In Transit", value: Math.round(avgOrders * 0.15) || 0, color: "hsl(210, 90%, 55%)" },
+    { name: "Delivered", value: Math.round(avgOrders * 0.71) || 0, color: "hsl(161, 97%, 37%)" },
+    { name: "In Transit", value: Math.round(avgOrders * 0.15) || 0, color: "hsl(148, 27%, 45%)" },
     { name: "Pending", value: currentPeriodData?.pending_orders ?? 0, color: "hsl(38, 92%, 50%)" },
     { name: "Cancelled", value: Math.round(avgOrders * 0.03) || 0, color: "hsl(0, 72%, 51%)" },
   ];
@@ -660,8 +660,8 @@ const Index = () => {
         <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
           <div className="p-4 border-b border-border">
             <div>
-              <h3 className="font-bold text-foreground">Sabse Zyada Bikne Wale Products</h3>
-              <p className="text-xs text-muted-foreground">Delivery Percentile ke hisab se - {selectedDateLabel}</p>
+              <h3 className="font-bold text-foreground">Top Products</h3>
+              <p className="text-xs text-muted-foreground">By Delivery Success Rate - {selectedDateLabel}</p>
             </div>
           </div>
 
@@ -703,7 +703,7 @@ const Index = () => {
                         product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 70 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                       )}>
                         <Truck className="w-3 h-3" />
-                        P{Math.round(product.DeliveryPercentage)}
+                        {Math.round(product.DeliveryPercentage)}%
                       </div>
                     </div>
                   </div>
@@ -751,7 +751,7 @@ const Index = () => {
                             product.DeliveryPercentage >= 90 ? "bg-success/10 text-success" : product.DeliveryPercentage >= 70 ? "bg-warning/10 text-warning" : "bg-destructive/10 text-destructive"
                           )}>
                             <Truck className="w-3 h-3" />
-                            P{Math.round(product.DeliveryPercentage)}
+                            {Math.round(product.DeliveryPercentage)}%
                           </div>
                         </td>
                       </tr>
