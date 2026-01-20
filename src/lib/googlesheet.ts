@@ -320,15 +320,25 @@ export async function fetchSheetData(): Promise<SheetData> {
     }
 
     console.log('Raw data received:', apiData);
+    console.log('API Response keys:', Object.keys(apiData));
 
     // Extract data from the API response - the API returns all data in a single response
     // Note: API uses camelCase keys like orderVsRevenueChart, deliveryPerformanceCity, deliveryPerformanceCourier
     const basicsRaw = apiData.basics || [];
-    const orderRevenueRaw = apiData.orderVsRevenueChart || apiData.ordervsrevenuechart || [];
-    const deliveryCourierRaw = apiData.deliveryPerformanceCourier || apiData.deliveryperformancecourier || [];
-    const deliveryCityRaw = apiData.deliveryPerformanceCity || apiData.deliveryperformancecity || [];
+    const orderRevenueRaw = apiData.orderVsRevenueChart || apiData.ordervsrevenuechart || apiData.ordervsrevenueChart || [];
+    const deliveryCourierRaw = apiData.deliveryPerformanceCourier || apiData.deliveryperformancecourier || apiData.courierPerformance || [];
+    const deliveryCityRaw = apiData.deliveryPerformanceCity || apiData.deliveryperformancecity || apiData.cityPerformance || [];
     const profitBandRaw = apiData.profitband || apiData.profitBand || [];
     const topProductsRaw = apiData.topProducts || apiData.topproducts || [];
+    
+    console.log('Parsed data lengths:', {
+      basics: basicsRaw.length,
+      orderRevenue: orderRevenueRaw.length,
+      deliveryCourier: deliveryCourierRaw.length,
+      deliveryCity: deliveryCityRaw.length,
+      profitBand: profitBandRaw.length,
+      topProducts: topProductsRaw.length
+    });
 
     return {
       basics: convertBasicsData(basicsRaw),
