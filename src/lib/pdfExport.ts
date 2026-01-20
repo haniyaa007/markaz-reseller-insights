@@ -92,72 +92,76 @@ export const generateAnalyticsPDF = (data: ExportData) => {
   yPos = (doc as any).lastAutoTable.finalY + 15;
   
   // Delivery Performance - Partners
-  addSectionHeader('Delivery Performance by Partners');
-  
-  const partnerData = [
-    ['Partner', 'Success Rate'],
-    ...deliveryDataPartners.map(p => [p.name, `${Math.round(p.percentage)}%`])
-  ];
-  
-  autoTable(doc, {
-    startY: yPos,
-    head: [partnerData[0]],
-    body: partnerData.slice(1),
-    margin: { left: margin, right: margin },
-    headStyles: {
-      fillColor: successColor,
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 10,
-    },
-    bodyStyles: {
-      fontSize: 10,
-      textColor: textDark,
-    },
-    alternateRowStyles: {
-      fillColor: [240, 253, 244],
-    },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 80 },
-      1: { halign: 'right', cellWidth: 50 },
-    },
-  });
-  
-  yPos = (doc as any).lastAutoTable.finalY + 15;
+  if (deliveryDataPartners && deliveryDataPartners.length > 0) {
+    addSectionHeader('Delivery Performance by Partners');
+    
+    const partnerData = [
+      ['Partner', 'Success Rate'],
+      ...deliveryDataPartners.map(p => [p.name, `${Math.round(p.percentage)}%`])
+    ];
+    
+    autoTable(doc, {
+      startY: yPos,
+      head: [partnerData[0]],
+      body: partnerData.slice(1),
+      margin: { left: margin, right: margin },
+      headStyles: {
+        fillColor: successColor,
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10,
+      },
+      bodyStyles: {
+        fontSize: 10,
+        textColor: textDark,
+      },
+      alternateRowStyles: {
+        fillColor: [240, 253, 244],
+      },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 80 },
+        1: { halign: 'right', cellWidth: 50 },
+      },
+    });
+    
+    yPos = (doc as any).lastAutoTable.finalY + 15;
+  }
   
   // Delivery Performance - Cities
-  addSectionHeader('Delivery Performance by Cities');
-  
-  const cityData = [
-    ['City', 'Success Rate'],
-    ...deliveryDataCities.map(c => [c.name, `${Math.round(c.percentage)}%`])
-  ];
-  
-  autoTable(doc, {
-    startY: yPos,
-    head: [cityData[0]],
-    body: cityData.slice(1),
-    margin: { left: margin, right: margin },
-    headStyles: {
-      fillColor: [59, 130, 246],
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 10,
-    },
-    bodyStyles: {
-      fontSize: 10,
-      textColor: textDark,
-    },
-    alternateRowStyles: {
-      fillColor: [239, 246, 255],
-    },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 80 },
-      1: { halign: 'right', cellWidth: 50 },
-    },
-  });
-  
-  yPos = (doc as any).lastAutoTable.finalY + 15;
+  if (deliveryDataCities && deliveryDataCities.length > 0) {
+    addSectionHeader('Delivery Performance by Cities');
+    
+    const cityData = [
+      ['City', 'Success Rate'],
+      ...deliveryDataCities.map(c => [c.name, `${Math.round(c.percentage)}%`])
+    ];
+    
+    autoTable(doc, {
+      startY: yPos,
+      head: [cityData[0]],
+      body: cityData.slice(1),
+      margin: { left: margin, right: margin },
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 10,
+      },
+      bodyStyles: {
+        fontSize: 10,
+        textColor: textDark,
+      },
+      alternateRowStyles: {
+        fillColor: [239, 246, 255],
+      },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 80 },
+        1: { halign: 'right', cellWidth: 50 },
+      },
+    });
+    
+    yPos = (doc as any).lastAutoTable.finalY + 15;
+  }
   
   // Check if we need a new page
   if (yPos > 220) {
