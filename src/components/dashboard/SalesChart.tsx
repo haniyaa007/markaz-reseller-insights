@@ -1,18 +1,18 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const data = [
-  { name: "Jan", sales: 45000, orders: 120 },
-  { name: "Feb", sales: 52000, orders: 145 },
-  { name: "Mar", sales: 48000, orders: 132 },
-  { name: "Apr", sales: 61000, orders: 178 },
-  { name: "May", sales: 55000, orders: 160 },
-  { name: "Jun", sales: 67000, orders: 195 },
-  { name: "Jul", sales: 72000, orders: 210 },
-  { name: "Aug", sales: 69000, orders: 198 },
-  { name: "Sep", sales: 78000, orders: 225 },
-  { name: "Oct", sales: 85000, orders: 248 },
-  { name: "Nov", sales: 92000, orders: 275 },
-  { name: "Dec", sales: 98000, orders: 295 },
+  { name: "Jan", sales: 125000, orders: 85 },
+  { name: "Feb", sales: 148000, orders: 102 },
+  { name: "Mar", sales: 132000, orders: 91 },
+  { name: "Apr", sales: 189000, orders: 128 },
+  { name: "May", sales: 167000, orders: 115 },
+  { name: "Jun", sales: 215000, orders: 147 },
+  { name: "Jul", sales: 243000, orders: 168 },
+  { name: "Aug", sales: 228000, orders: 156 },
+  { name: "Sep", sales: 276000, orders: 189 },
+  { name: "Oct", sales: 312000, orders: 215 },
+  { name: "Nov", sales: 358000, orders: 246 },
+  { name: "Dec", sales: 402000, orders: 278 },
 ];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
