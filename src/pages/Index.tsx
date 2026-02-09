@@ -384,36 +384,56 @@ const Index = () => {
                   <span className="flex items-center gap-1.5"><span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-info" /> Orders</span>
                 </div>
               </div>
-              {loadingData || !sheetData?.orderRevenueChart.length ? (
-                <div className="flex items-center justify-center h-[380px]">
-                  <div className="text-center">
-                    <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Loading chart data...</p>
+              {(() => {
+                // Dummy data for Revenue Overview
+                const dummyRevenueData = [
+                  { month_name: "Mar", total_revenue: 2850000, total_orders: 142 },
+                  { month_name: "Apr", total_revenue: 3120000, total_orders: 168 },
+                  { month_name: "May", total_revenue: 2980000, total_orders: 155 },
+                  { month_name: "Jun", total_revenue: 3450000, total_orders: 189 },
+                  { month_name: "Jul", total_revenue: 3890000, total_orders: 212 },
+                  { month_name: "Aug", total_revenue: 4250000, total_orders: 234 },
+                  { month_name: "Sep", total_revenue: 3980000, total_orders: 198 },
+                  { month_name: "Oct", total_revenue: 4520000, total_orders: 245 },
+                  { month_name: "Nov", total_revenue: 5120000, total_orders: 278 },
+                  { month_name: "Dec", total_revenue: 5680000, total_orders: 312 },
+                  { month_name: "Jan", total_revenue: 4890000, total_orders: 265 },
+                  { month_name: "Feb", total_revenue: 5240000, total_orders: 289 },
+                ];
+                
+                const chartData = sheetData?.orderRevenueChart.length ? sheetData.orderRevenueChart : dummyRevenueData;
+                
+                return loadingData ? (
+                  <div className="flex items-center justify-center h-[380px]">
+                    <div className="text-center">
+                      <RefreshCw className="w-8 h-8 animate-spin text-primary mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground">Loading chart data...</p>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height={380}>
-                  <AreaChart data={sheetData.orderRevenueChart} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.25} />
-                        <stop offset="100%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0.2} />
-                        <stop offset="100%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 90%)" vertical={false} />
-                    <XAxis dataKey="month_name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} dy={8} />
-                    <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${(v/1000000).toFixed(0)}M`} width={35} />
-                    <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(210, 90%, 55%)" }} width={30} />
-                    <Tooltip content={<SalesTooltip />} />
-                    <Area yAxisId="left" type="monotone" dataKey="total_revenue" stroke="hsl(152, 69%, 45%)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
-                    <Area yAxisId="right" type="monotone" dataKey="total_orders" stroke="hsl(210, 90%, 55%)" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
+                ) : (
+                  <ResponsiveContainer width="100%" height={380}>
+                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0.25} />
+                          <stop offset="100%" stopColor="hsl(152, 69%, 45%)" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0.2} />
+                          <stop offset="100%" stopColor="hsl(210, 90%, 55%)" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 90%)" vertical={false} />
+                      <XAxis dataKey="month_name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: "hsl(220, 10%, 45%)", fontWeight: 500 }} dy={8} />
+                      <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(220, 10%, 45%)" }} tickFormatter={(v) => `${(v/1000000).toFixed(1)}M`} width={40} />
+                      <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "hsl(210, 90%, 55%)" }} width={30} />
+                      <Tooltip content={<SalesTooltip />} />
+                      <Area yAxisId="left" type="monotone" dataKey="total_revenue" stroke="hsl(152, 69%, 45%)" strokeWidth={2.5} fillOpacity={1} fill="url(#colorSales)" />
+                      <Area yAxisId="right" type="monotone" dataKey="total_orders" stroke="hsl(210, 90%, 55%)" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                );
+              })()}
             </div>
           </div>
 
