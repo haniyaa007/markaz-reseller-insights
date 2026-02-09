@@ -349,28 +349,24 @@ const Index = () => {
             </div>
           </MetricInfoPopover>
 
-          {/* Pending Orders - Coming Soon */}
-          <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card relative overflow-hidden">
-            {/* Blurred Content */}
-            <div className="blur-sm opacity-50">
+          <MetricInfoPopover metricKey="pending">
+            <div className="bg-card rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-border shadow-card hover:shadow-elevated transition-all group">
               <div className="flex items-center justify-between">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground">Pending</p>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground flex items-center gap-1">
+                  Pending
+                  <Info className="w-3 h-3 opacity-40 group-hover:opacity-100 transition-opacity hidden sm:block" />
+                </p>
                 <div className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-warning/10"><Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-warning" /></div>
               </div>
-              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">0</p>
+              <p className="text-lg sm:text-xl md:text-2xl font-bold text-foreground mt-1.5 sm:mt-2">
+                {loadingData ? "Loading..." : "24"}
+              </p>
               <div className="flex items-center gap-1 mt-1.5 sm:mt-2">
                 <ArrowDownRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-success" />
                 <span className="text-[10px] sm:text-xs font-semibold text-success">-8.5%</span>
               </div>
             </div>
-            {/* Coming Soon Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-background/60 backdrop-blur-[2px]">
-              <div className="text-center">
-                <Clock className="w-6 h-6 text-warning mx-auto mb-1" />
-                <p className="text-xs font-semibold text-foreground">Jald Aa Raha Hai</p>
-              </div>
-            </div>
-          </div>
+          </MetricInfoPopover>
         </div>
 
         {/* ROW 2-4: Revenue Overview (left) + Customers/Order Status/Delivery (right) */}
@@ -445,45 +441,43 @@ const Index = () => {
               </div>
             </MetricInfoPopover>
 
-            {/* Order Status - Coming Soon */}
-            <div className="bg-card rounded-2xl p-4 border border-border shadow-card relative overflow-hidden">
-              {/* Blurred Content */}
-              <div className="blur-sm opacity-40">
-                <h3 className="font-bold text-foreground text-sm mb-3">Order Status</h3>
-                <div className="flex items-center gap-4">
-                  <div className="relative flex-shrink-0">
-                    <ResponsiveContainer width={120} height={120}>
-                      <PieChart>
-                        <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3} dataKey="value" strokeWidth={0}>
-                          {orderStatusData.map((entry, i) => (
-                            <Cell key={i} fill={entry.color} />
-                          ))}
-                        </Pie>
-                      </PieChart>
-                    </ResponsiveContainer>
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                      <p className="text-xl font-bold">0</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
-                    {orderStatusData.map((item) => (
-                      <div key={item.name} className="flex items-center gap-2">
-                        <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
-                        <span className="text-xs text-muted-foreground">{item.name}</span>
-                        <span className="text-xs font-bold text-foreground ml-auto">0</span>
-                      </div>
-                    ))}
+            {/* Order Status */}
+            <div className="bg-card rounded-2xl p-4 border border-border shadow-card">
+              <h3 className="font-bold text-foreground text-sm mb-3">Order Status</h3>
+              <div className="flex items-center gap-4">
+                <div className="relative flex-shrink-0">
+                  <ResponsiveContainer width={120} height={120}>
+                    <PieChart>
+                      <Pie data={orderStatusData} cx="50%" cy="50%" innerRadius={35} outerRadius={55} paddingAngle={3} dataKey="value" strokeWidth={0}>
+                        {orderStatusData.map((entry, i) => (
+                          <Cell key={i} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-card border border-border rounded-xl p-3 shadow-xl">
+                              <p className="text-sm font-bold" style={{ color: payload[0].payload.color }}>{payload[0].name}</p>
+                              <p className="text-lg font-bold text-foreground">{payload[0].value} orders</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
+                    <p className="text-xl font-bold">{totalOrdersForPie}</p>
                   </div>
                 </div>
-              </div>
-              {/* Coming Soon Overlay */}
-              <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-[3px]">
-                <div className="text-center">
-                  <div className="w-12 h-12 mx-auto mb-2 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                    <Clock className="w-6 h-6 text-primary" />
-                  </div>
-                  <p className="text-sm font-bold text-foreground">Jald Aa Raha Hai</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Order status tracking</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 flex-1">
+                  {orderStatusData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: item.color }} />
+                      <span className="text-xs text-muted-foreground">{item.name}</span>
+                      <span className="text-xs font-bold text-foreground ml-auto">{item.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -763,18 +757,100 @@ const Index = () => {
           )}
         </div>
 
-        {/* ROW 7: RECENT ORDERS - With Coming Soon Overlay */}
-        <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden relative">
-          {/* Coming Soon Overlay */}
-          <div className="flex items-center justify-center bg-background/80 backdrop-blur-sm py-20">
-            <div className="text-center p-8">
-              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                <Clock className="w-10 h-10 text-primary" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground mb-2">Jald Aa Raha Hai</h3>
-              <p className="text-sm text-muted-foreground max-w-md">
-                Recent orders tracking abhi development mein hai. Jald real-time order updates ke liye wapas aayein!
-              </p>
+        {/* ROW 7: RECENT ORDERS */}
+        <div className="bg-card rounded-2xl border border-border shadow-card overflow-hidden">
+          <div className="p-4 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-lg sm:text-xl font-bold text-foreground">Recent Orders</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">Track and manage your orders</p>
+            </div>
+            <div className="relative">
+              <input 
+                type="text"
+                placeholder="Search orders..."
+                className="pl-4 pr-4 py-2 sm:py-2.5 w-full sm:w-64 rounded-full border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+              />
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="text-left py-3 sm:py-4 px-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Order</th>
+                  <th className="text-left py-3 sm:py-4 px-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Customer</th>
+                  <th className="text-left py-3 sm:py-4 px-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Product</th>
+                  <th className="text-right py-3 sm:py-4 px-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Amount</th>
+                  <th className="text-center py-3 sm:py-4 px-4 sm:px-6 text-[10px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/50">
+                {[
+                  { id: "ORD-7829", customer: "Ahmed Khan", product: "Pink Heart Necklace", amount: 880, status: "delivered", date: "Feb 9, 2026" },
+                  { id: "ORD-7828", customer: "Fatima Ali", product: "Summer Sunscreen Shirt", amount: 1455, status: "transit", date: "Feb 8, 2026" },
+                  { id: "ORD-7827", customer: "Usman Sheikh", product: "Quilted Cotton Jacket", amount: 3758, status: "pending", date: "Feb 8, 2026" },
+                  { id: "ORD-7826", customer: "Zainab Hassan", product: "Coral Fleece Pajamas", amount: 2152, status: "delivered", date: "Feb 7, 2026" },
+                  { id: "ORD-7825", customer: "Bilal Ahmed", product: "Wax Carving Knife Set", amount: 927, status: "cancelled", date: "Feb 6, 2026" },
+                ].map((order) => {
+                  const statusStyles: Record<string, { label: string; bg: string; text: string }> = {
+                    delivered: { label: "Delivered", bg: "bg-success/10", text: "text-success" },
+                    transit: { label: "In Transit", bg: "bg-info/10", text: "text-info" },
+                    pending: { label: "Pending", bg: "bg-warning/10", text: "text-warning" },
+                    cancelled: { label: "Cancelled", bg: "bg-destructive/10", text: "text-destructive" },
+                  };
+                  const style = statusStyles[order.status];
+                  
+                  return (
+                    <tr key={order.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="py-3 sm:py-4 px-4 sm:px-6">
+                        <div>
+                          <span className="font-mono text-xs sm:text-sm font-bold text-primary">{order.id}</span>
+                          <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">{order.date}</p>
+                        </div>
+                      </td>
+                      <td className="py-3 sm:py-4 px-4 sm:px-6">
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                            <span className="text-[10px] sm:text-sm font-bold text-primary">
+                              {order.customer.split(" ").map(n => n[0]).join("")}
+                            </span>
+                          </div>
+                          <span className="font-semibold text-foreground text-xs sm:text-sm">{order.customer}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 sm:py-4 px-4 sm:px-6 hidden md:table-cell">
+                        <span className="text-xs sm:text-sm text-foreground line-clamp-1">{order.product}</span>
+                      </td>
+                      <td className="py-3 sm:py-4 px-4 sm:px-6 text-right">
+                        <span className="font-semibold text-foreground text-xs sm:text-sm">Rs {order.amount.toLocaleString()}</span>
+                      </td>
+                      <td className="py-3 sm:py-4 px-4 sm:px-6">
+                        <div className="flex justify-center">
+                          <div className={cn("flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-[10px] sm:text-xs font-semibold", style.bg, style.text)}>
+                            {order.status === "delivered" && <CheckCircle2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+                            {order.status === "transit" && <Truck className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+                            {order.status === "pending" && <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+                            {order.status === "cancelled" && <XCircle className="w-3 h-3 sm:w-3.5 sm:h-3.5" />}
+                            <span className="hidden sm:inline">{style.label}</span>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          
+          <div className="p-3 sm:p-4 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              Showing <span className="font-semibold text-foreground">5</span> of <span className="font-semibold text-foreground">128</span> orders
+            </p>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-border text-xs sm:text-sm font-medium hover:bg-muted transition-colors">Previous</button>
+              <button className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg gradient-hero text-primary-foreground text-xs sm:text-sm font-semibold shadow-glow">1</button>
+              <button className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-border text-xs sm:text-sm font-medium hover:bg-muted transition-colors">2</button>
+              <button className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-border text-xs sm:text-sm font-medium hover:bg-muted transition-colors">Next</button>
             </div>
           </div>
         </div>
